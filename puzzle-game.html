@@ -1,0 +1,1136 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>拼图小游戏 - 升级版</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        h1 {
+            color: white;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            font-size: 2.5em;
+        }
+
+        .game-container {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            display: flex;
+            gap: 25px;
+            flex-wrap: wrap;
+            justify-content: center;
+            max-width: 1000px;
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            min-width: 180px;
+        }
+
+        .btn {
+            padding: 12px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #764ba2;
+            color: white;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-warning {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .btn-info {
+            background: #17a2b8;
+            color: white;
+        }
+
+        .section {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+        }
+
+        .section-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: #666;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        .difficulty-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .diff-btn {
+            padding: 10px;
+            font-size: 14px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: bold;
+            background: white;
+        }
+
+        .diff-btn:hover {
+            border-color: #667eea;
+            color: #667eea;
+        }
+
+        .diff-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .mode-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .mode-btn {
+            padding: 10px;
+            font-size: 14px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: bold;
+            background: white;
+            text-align: left;
+        }
+
+        .mode-btn:hover {
+            border-color: #764ba2;
+            color: #764ba2;
+        }
+
+        .mode-btn.active {
+            background: #764ba2;
+            color: white;
+            border-color: #764ba2;
+        }
+
+        .image-selector {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .image-thumb {
+            width: 50px;
+            height: 50px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            object-fit: cover;
+        }
+
+        .image-thumb:hover {
+            border-color: #667eea;
+            transform: scale(1.1);
+        }
+
+        .image-thumb.active {
+            border-color: #667eea;
+            box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.3);
+        }
+
+        #gameCanvas {
+            border: 3px solid #333;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .info {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .moves-count {
+            color: #667eea;
+        }
+
+        .timer-count {
+            color: #28a745;
+        }
+
+        .limit-count {
+            color: #dc3545;
+        }
+
+        .success-message, .game-over-message {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 35px;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+            text-align: center;
+            z-index: 1000;
+            min-width: 300px;
+        }
+
+        .success-message h2 {
+            color: #28a745;
+            margin-bottom: 15px;
+            font-size: 2em;
+        }
+
+        .game-over-message h2 {
+            color: #dc3545;
+            margin-bottom: 15px;
+            font-size: 2em;
+        }
+
+        .success-message p, .game-over-message p {
+            margin: 10px 0;
+            font-size: 18px;
+        }
+
+        .success-message button, .game-over-message button {
+            margin-top: 20px;
+            margin: 10px;
+        }
+
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 999;
+        }
+
+        .best-scores {
+            margin-top: 15px;
+            padding: 10px;
+            background: #e8f5e9;
+            border-radius: 6px;
+            font-size: 13px;
+            color: #2e7d32;
+        }
+
+        .best-scores-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .best-scores p {
+            margin: 3px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧩 拼图小游戏</h1>
+    
+    <div class="game-container">
+        <div class="controls">
+            <button class="btn btn-primary" onclick="startNewGame()">🎮 新游戏</button>
+            <button class="btn btn-secondary" onclick="loadImage()">📷 上传图片</button>
+            <button class="btn btn-success" onclick="showHint()">💡 提示</button>
+            
+            <div class="section">
+                <div class="section-title">难度等级</div>
+                <div class="difficulty-buttons">
+                    <button class="diff-btn active" onclick="setDifficulty(3)" id="diff-3">简单 3×3</button>
+                    <button class="diff-btn" onclick="setDifficulty(4)" id="diff-4">中等 4×4</button>
+                    <button class="diff-btn" onclick="setDifficulty(5)" id="diff-5">困难 5×5</button>
+                    <button class="diff-btn" onclick="setDifficulty(6)" id="diff-6">专家 6×6</button>
+                </div>
+            </div>
+            
+            <div class="section">
+                <div class="section-title">游戏模式</div>
+                <div class="mode-buttons">
+                    <button class="mode-btn active" onclick="setGameMode('classic')">🎯 经典模式</button>
+                    <button class="mode-btn" onclick="setGameMode('timed')">⏱️ 限时模式 (60秒)</button>
+                    <button class="mode-btn" onclick="setGameMode('limited')">📊 步数限制</button>
+                </div>
+            </div>
+            
+            <div class="section">
+                <div class="section-title">选择图片</div>
+                <div class="image-selector" id="imageSelector"></div>
+            </div>
+            
+            <div class="info">
+                <p>移动: <span class="moves-count" id="movesCount">0</span></p>
+                <p>时间: <span class="timer-count" id="timer">00:00</span></p>
+                <p id="limitDisplay" style="display: none;">剩余: <span class="limit-count" id="limitCount">0</span></p>
+            </div>
+            
+            <div class="best-scores" id="bestScores">
+                <div class="best-scores-title">🏆 最佳成绩</div>
+            </div>
+        </div>
+        
+        <canvas id="gameCanvas" width="600" height="600"></canvas>
+    </div>
+
+    <div class="overlay" id="overlay"></div>
+    <div class="success-message" id="successMessage">
+        <h2>🎉 恭喜完成！</h2>
+        <p>移动次数: <span id="finalMoves">0</span></p>
+        <p>用时: <span id="finalTime">00:00</span></p>
+        <p id="newRecord" style="color: #ffc107; font-weight: bold; display: none;">🌟 新纪录！</p>
+        <button class="btn btn-primary" onclick="closeModalAndNewGame()">再玩一次</button>
+        <button class="btn btn-secondary" onclick="closeModal()">关闭</button>
+    </div>
+    <div class="game-over-message" id="gameOverMessage">
+        <h2>😔 游戏结束</h2>
+        <p id="gameOverReason">时间到！</p>
+        <button class="btn btn-primary" onclick="closeModalAndNewGame()">再试一次</button>
+        <button class="btn btn-secondary" onclick="closeModal()">关闭</button>
+    </div>
+
+    <input type="file" id="fileInput" accept="image/*" style="display: none;" onchange="handleFileUpload(event)">
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const canvasSize = 600;
+        
+        let pieces = [];
+        let selectedPiece = null;
+        let gridSize = 3;
+        let pieceSize;
+        let moves = 0;
+        let gameStarted = false;
+        let timerInterval;
+        let seconds = 0;
+        let currentImage = null;
+        let showingHint = false;
+        let gameMode = 'classic';
+        let timeLimit = 60;
+        let moveLimit = 0;
+        
+        const presetImages = [
+            { name: '渐变方块', generator: createGradientBlocksImage },
+            { name: '星空', generator: createStarfieldImage },
+            { name: '彩虹', generator: createRainbowImage },
+            { name: '几何图案', generator: createGeometricPatternImage },
+            { name: '花朵', generator: createFlowerImage },
+            { name: '山脉', generator: createMountainsImage },
+            { name: '海洋', generator: createOceanImage },
+            { name: '城市夜景', generator: createCityNightImage }
+        ];
+        
+        let currentImageIndex = 0;
+
+        function createGradientBlocksImage() {
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = canvasSize;
+            tempCanvas.height = canvasSize;
+            const tempCtx = tempCanvas.getContext('2d');
+            
+            const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#98D8C8', '#F7DC6F', '#BB8FCE'];
+            
+            for (let i = 0; i < 9; i++) {
+                const row = Math.floor(i / 3);
+                const col = i % 3;
+                const x = col * (canvasSize / 3);
+                const y = row * (canvasSize / 3);
+                const gradient = tempCtx.createLinearGradient(x, y, x + canvasSize/3, y + canvasSize/3);
+                gradient.addColorStop(0, colors[i]);
+                gradient.addColorStop(1, adjustColor(colors[i], -30));
+                tempCtx.fillStyle = gradient;
+                tempCtx.fillRect(x, y, canvasSize/3, canvasSize/3);
+                
+                tempCtx.fillStyle = 'rgba(255,255,255,0.3)';
+                tempCtx.font = 'bold 40px Arial';
+                tempCtx.textAlign = 'center';
+                tempCtx.textBaseline = 'middle';
+                tempCtx.fillText(i + 1, x + canvasSize/6, y + canvasSize/6);
+            }
+            return tempCanvas;
+        }
+
+        function createStarfieldImage() {
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = canvasSize;
+            tempCanvas.height = canvasSize;
+            const tempCtx = tempCanvas.getContext('2d');
+            
+            const gradient = tempCtx.createLinearGradient(0, 0, 0, canvasSize);
+            gradient.addColorStop(0, '#0a0a2e');
+            gradient.addColorStop(0.5, '#1a1a4e');
+            gradient.addColorStop(1, '#0a0a2e');
+            tempCtx.fillStyle = gradient;
+            tempCtx.fillRect(0, 0, canvasSize, canvasSize);
+            
+            for (let i = 0; i < 200; i++) {
+                const x = Math.random() * canvasSize;
+                const y = Math.random() * canvasSize;
+                const size = Math.random() * 3 + 1;
+                const alpha = Math.random() * 0.8 + 0.2;
+                
+                tempCtx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+                tempCtx.beginPath();
+                tempCtx.arc(x, y, size, 0, Math.PI * 2);
+                tempCtx.fill();
+            }
+            
+            for (let i = 0; i < 5; i++) {
+                const x = Math.random() * canvasSize;
+                const y = Math.random() * canvasSize;
+                drawStar(tempCtx, x, y, 5, 20, 10, '#FFD700');
+            }
+            
+            return tempCanvas;
+        }
+
+        function createRainbowImage() {
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = canvasSize;
+            tempCanvas.height = canvasSize;
+            const tempCtx = tempCanvas.getContext('2d');
+            
+            tempCtx.fillStyle = '#87CEEB';
+            tempCtx.fillRect(0, 0, canvasSize, canvasSize);
+            
+            const rainbowColors = ['#FF0000', '#FF7F00', '#FFFF00', '#00FF00', '#0000FF', '#4B0082', '#8B00FF'];
+            
+            for (let i = 0; i < rainbowColors.length; i++) {
+                tempCtx.beginPath();
+                tempCtx.arc(canvasSize/2, canvasSize + 100, 400 - i * 30, Math.PI, 0, false);
+                tempCtx.lineWidth = 35;
+                tempCtx.strokeStyle = rainbowColors[i];
+                tempCtx.stroke();
+            }
+            
+            tempCtx.fillStyle = '#FFFFFF';
+            tempCtx.beginPath();
+            tempCtx.arc(canvasSize/2, canvasSize/3, 50, 0, Math.PI * 2);
+            tempCtx.fill();
+            
+            return tempCanvas;
+        }
+
+        function createGeometricPatternImage() {
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = canvasSize;
+            tempCanvas.height = canvasSize;
+            const tempCtx = tempCanvas.getContext('2d');
+            
+            tempCtx.fillStyle = '#2C3E50';
+            tempCtx.fillRect(0, 0, canvasSize, canvasSize);
+            
+            const shapes = [
+                { type: 'circle', color: '#E74C3C', x: 150, y: 150, size: 80 },
+                { type: 'triangle', color: '#3498DB', x: 450, y: 150, size: 80 },
+                { type: 'square', color: '#2ECC71', x: 300, y: 300, size: 80 },
+                { type: 'diamond', color: '#F39C12', x: 150, y: 450, size: 80 },
+                { type: 'hexagon', color: '#9B59B6', x: 450, y: 450, size: 60 }
+            ];
+            
+            shapes.forEach(shape => {
+                tempCtx.fillStyle = shape.color;
+                switch(shape.type) {
+                    case 'circle':
+                        tempCtx.beginPath();
+                        tempCtx.arc(shape.x, shape.y, shape.size, 0, Math.PI * 2);
+                        tempCtx.fill();
+                        break;
+                    case 'triangle':
+                        tempCtx.beginPath();
+                        tempCtx.moveTo(shape.x, shape.y - shape.size);
+                        tempCtx.lineTo(shape.x - shape.size, shape.y + shape.size);
+                        tempCtx.lineTo(shape.x + shape.size, shape.y + shape.size);
+                        tempCtx.closePath();
+                        tempCtx.fill();
+                        break;
+                    case 'square':
+                        tempCtx.fillRect(shape.x - shape.size/2, shape.y - shape.size/2, shape.size, shape.size);
+                        break;
+                    case 'diamond':
+                        tempCtx.beginPath();
+                        tempCtx.moveTo(shape.x, shape.y - shape.size);
+                        tempCtx.lineTo(shape.x + shape.size, shape.y);
+                        tempCtx.lineTo(shape.x, shape.y + shape.size);
+                        tempCtx.lineTo(shape.x - shape.size, shape.y);
+                        tempCtx.closePath();
+                        tempCtx.fill();
+                        break;
+                    case 'hexagon':
+                        drawHexagon(tempCtx, shape.x, shape.y, shape.size);
+                        break;
+                }
+            });
+            
+            return tempCanvas;
+        }
+
+        function createFlowerImage() {
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = canvasSize;
+            tempCanvas.height = canvasSize;
+            const tempCtx = tempCanvas.getContext('2d');
+            
+            const gradient = tempCtx.createLinearGradient(0, 0, canvasSize, canvasSize);
+            gradient.addColorStop(0, '#FFF5F5');
+            gradient.addColorStop(1, '#FFE4E1');
+            tempCtx.fillStyle = gradient;
+            tempCtx.fillRect(0, 0, canvasSize, canvasSize);
+            
+            drawFlower(tempCtx, 150, 150, '#FF69B4', '#FF1493');
+            drawFlower(tempCtx, 450, 150, '#FFB6C1', '#FF69B4');
+            drawFlower(tempCtx, 300, 350, '#FFC0CB', '#FF69B4');
+            drawFlower(tempCtx, 150, 450, '#DB7093', '#FF1493');
+            drawFlower(tempCtx, 450, 450, '#FFB6C1', '#FF69B4');
+            
+            return tempCanvas;
+        }
+
+        function createMountainsImage() {
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = canvasSize;
+            tempCanvas.height = canvasSize;
+            const tempCtx = tempCanvas.getContext('2d');
+            
+            const skyGradient = tempCtx.createLinearGradient(0, 0, 0, canvasSize * 0.6);
+            skyGradient.addColorStop(0, '#87CEEB');
+            skyGradient.addColorStop(1, '#E0F6FF');
+            tempCtx.fillStyle = skyGradient;
+            tempCtx.fillRect(0, 0, canvasSize, canvasSize);
+            
+            tempCtx.fillStyle = '#FFFFFF';
+            tempCtx.beginPath();
+            tempCtx.arc(100, 100, 40, 0, Math.PI * 2);
+            tempCtx.fill();
+            tempCtx.beginPath();
+            tempCtx.arc(130, 80, 30, 0, Math.PI * 2);
+            tempCtx.fill();
+            
+            tempCtx.fillStyle = '#8B7355';
+            tempCtx.beginPath();
+            tempCtx.moveTo(0, canvasSize * 0.6);
+            tempCtx.lineTo(150, canvasSize * 0.3);
+            tempCtx.lineTo(300, canvasSize * 0.5);
+            tempCtx.lineTo(450, canvasSize * 0.25);
+            tempCtx.lineTo(600, canvasSize * 0.55);
+            tempCtx.lineTo(600, canvasSize);
+            tempCtx.lineTo(0, canvasSize);
+            tempCtx.closePath();
+            tempCtx.fill();
+            
+            tempCtx.fillStyle = '#654321';
+            tempCtx.beginPath();
+            tempCtx.moveTo(0, canvasSize * 0.75);
+            tempCtx.lineTo(100, canvasSize * 0.55);
+            tempCtx.lineTo(250, canvasSize * 0.7);
+            tempCtx.lineTo(400, canvasSize * 0.5);
+            tempCtx.lineTo(550, canvasSize * 0.7);
+            tempCtx.lineTo(600, canvasSize);
+            tempCtx.lineTo(0, canvasSize);
+            tempCtx.closePath();
+            tempCtx.fill();
+            
+            return tempCanvas;
+        }
+
+        function createOceanImage() {
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = canvasSize;
+            tempCanvas.height = canvasSize;
+            const tempCtx = tempCanvas.getContext('2d');
+            
+            const skyGradient = tempCtx.createLinearGradient(0, 0, 0, canvasSize * 0.5);
+            skyGradient.addColorStop(0, '#1E90FF');
+            skyGradient.addColorStop(1, '#87CEEB');
+            tempCtx.fillStyle = skyGradient;
+            tempCtx.fillRect(0, 0, canvasSize, canvasSize * 0.5);
+            
+            const oceanGradient = tempCtx.createLinearGradient(0, canvasSize * 0.5, 0, canvasSize);
+            oceanGradient.addColorStop(0, '#006994');
+            oceanGradient.addColorStop(0.5, '#004D70');
+            oceanGradient.addColorStop(1, '#00334D');
+            tempCtx.fillStyle = oceanGradient;
+            tempCtx.fillRect(0, canvasSize * 0.5, canvasSize, canvasSize * 0.5);
+            
+            for (let i = 0; i < 5; i++) {
+                tempCtx.beginPath();
+                tempCtx.moveTo(0, canvasSize * 0.5 + i * 60);
+                for (let x = 0; x <= canvasSize; x += 20) {
+                    const y = canvasSize * 0.5 + i * 60 + Math.sin(x * 0.02 + i) * 10;
+                    tempCtx.lineTo(x, y);
+                }
+                tempCtx.lineTo(canvasSize, canvasSize);
+                tempCtx.lineTo(0, canvasSize);
+                tempCtx.closePath();
+                tempCtx.fillStyle = `rgba(255, 255, 255, ${0.1 - i * 0.015})`;
+                tempCtx.fill();
+            }
+            
+            tempCtx.fillStyle = '#FFFFFF';
+            tempCtx.beginPath();
+            tempCtx.moveTo(500, 50);
+            tempCtx.lineTo(520, 80);
+            tempCtx.lineTo(480, 80);
+            tempCtx.closePath();
+            tempCtx.fill();
+            
+            return tempCanvas;
+        }
+
+        function createCityNightImage() {
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = canvasSize;
+            tempCanvas.height = canvasSize;
+            const tempCtx = tempCanvas.getContext('2d');
+            
+            const skyGradient = tempCtx.createLinearGradient(0, 0, 0, canvasSize);
+            skyGradient.addColorStop(0, '#0a0a1a');
+            skyGradient.addColorStop(0.5, '#1a1a3a');
+            skyGradient.addColorStop(1, '#2a2a4a');
+            tempCtx.fillStyle = skyGradient;
+            tempCtx.fillRect(0, 0, canvasSize, canvasSize);
+            
+            for (let i = 0; i < 100; i++) {
+                const x = Math.random() * canvasSize;
+                const y = Math.random() * canvasSize * 0.6;
+                tempCtx.fillStyle = `rgba(255, 255, 255, ${Math.random() * 0.8})`;
+                tempCtx.beginPath();
+                tempCtx.arc(x, y, Math.random() * 2, 0, Math.PI * 2);
+                tempCtx.fill();
+            }
+            
+            const buildings = [
+                { x: 50, width: 80, height: 300, color: '#2C3E50' },
+                { x: 150, width: 100, height: 400, color: '#34495E' },
+                { x: 270, width: 60, height: 250, color: '#2C3E50' },
+                { x: 350, width: 120, height: 450, color: '#1A252F' },
+                { x: 490, width: 80, height: 350, color: '#34495E' }
+            ];
+            
+            buildings.forEach(building => {
+                tempCtx.fillStyle = building.color;
+                tempCtx.fillRect(building.x, canvasSize - building.height, building.width, building.height);
+                
+                for (let floor = 0; floor < building.height; floor += 40) {
+                    for (let window = 0; window < building.width; window += 25) {
+                        if (Math.random() > 0.3) {
+                            tempCtx.fillStyle = Math.random() > 0.5 ? '#FFD700' : '#FF6B6B';
+                            tempCtx.fillRect(building.x + window + 5, canvasSize - building.height + floor + 10, 15, 20);
+                        }
+                    }
+                }
+            });
+            
+            return tempCanvas;
+        }
+
+        function drawStar(ctx, cx, cy, spikes, outerRadius, innerRadius, color) {
+            let rot = Math.PI / 2 * 3;
+            let x = cx;
+            let y = cy;
+            const step = Math.PI / spikes;
+            
+            ctx.beginPath();
+            ctx.moveTo(cx, cy - outerRadius);
+            
+            for (let i = 0; i < spikes; i++) {
+                x = cx + Math.cos(rot) * outerRadius;
+                y = cy + Math.sin(rot) * outerRadius;
+                ctx.lineTo(x, y);
+                rot += step;
+                
+                x = cx + Math.cos(rot) * innerRadius;
+                y = cy + Math.sin(rot) * innerRadius;
+                ctx.lineTo(x, y);
+                rot += step;
+            }
+            
+            ctx.lineTo(cx, cy - outerRadius);
+            ctx.closePath();
+            ctx.fillStyle = color;
+            ctx.fill();
+        }
+
+        function drawHexagon(ctx, cx, cy, radius) {
+            ctx.beginPath();
+            for (let i = 0; i < 6; i++) {
+                const angle = (Math.PI / 3) * i - Math.PI / 6;
+                const x = cx + radius * Math.cos(angle);
+                const y = cy + radius * Math.sin(angle);
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.closePath();
+            ctx.fill();
+        }
+
+        function drawFlower(ctx, cx, cy, petalColor, centerColor) {
+            ctx.fillStyle = petalColor;
+            for (let i = 0; i < 8; i++) {
+                const angle = (Math.PI / 4) * i;
+                ctx.save();
+                ctx.translate(cx, cy);
+                ctx.rotate(angle);
+                ctx.beginPath();
+                ctx.ellipse(0, -30, 25, 40, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+            
+            ctx.fillStyle = centerColor;
+            ctx.beginPath();
+            ctx.arc(cx, cy, 25, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        function adjustColor(color, amount) {
+            const hex = color.replace('#', '');
+            const r = Math.max(0, Math.min(255, parseInt(hex.substr(0, 2), 16) + amount));
+            const g = Math.max(0, Math.min(255, parseInt(hex.substr(2, 2), 16) + amount));
+            const b = Math.max(0, Math.min(255, parseInt(hex.substr(4, 2), 16) + amount));
+            return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+        }
+
+        function initImageSelector() {
+            const selector = document.getElementById('imageSelector');
+            selector.innerHTML = '';
+            
+            presetImages.forEach((image, index) => {
+                const thumb = image.generator();
+                const imgElement = document.createElement('img');
+                imgElement.src = thumb.toDataURL();
+                imgElement.className = `image-thumb ${index === currentImageIndex ? 'active' : ''}`;
+                imgElement.title = image.name;
+                imgElement.onclick = () => selectPresetImage(index);
+                selector.appendChild(imgElement);
+            });
+            
+            const customThumb = document.createElement('div');
+            customThumb.className = 'image-thumb';
+            customThumb.style.display = 'flex';
+            customThumb.style.alignItems = 'center';
+            customThumb.style.justifyContent = 'center';
+            customThumb.style.fontSize = '24px';
+            customThumb.textContent = '+';
+            customThumb.title = '上传自定义图片';
+            customThumb.onclick = loadImage;
+            selector.appendChild(customThumb);
+        }
+
+        function selectPresetImage(index) {
+            currentImageIndex = index;
+            currentImage = presetImages[index].generator();
+            
+            document.querySelectorAll('.image-thumb').forEach((el, i) => {
+                el.classList.toggle('active', i === index);
+            });
+            
+            startNewGame();
+        }
+
+        function loadImage() {
+            document.getElementById('fileInput').click();
+        }
+
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.onload = function() {
+                        currentImage = img;
+                        currentImageIndex = -1;
+                        document.querySelectorAll('.image-thumb').forEach(el => el.classList.remove('active'));
+                        startNewGame();
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function setDifficulty(size) {
+            gridSize = size;
+            
+            document.querySelectorAll('.diff-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(`diff-${size}`).classList.add('active');
+            
+            if (gameMode === 'limited') {
+                moveLimit = size * size * 3;
+                document.getElementById('limitCount').textContent = moveLimit;
+            }
+        }
+
+        function setGameMode(mode) {
+            gameMode = mode;
+            
+            document.querySelectorAll('.mode-btn').forEach(el => el.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            const limitDisplay = document.getElementById('limitDisplay');
+            
+            if (mode === 'timed') {
+                timeLimit = 60;
+                limitDisplay.style.display = 'block';
+                document.getElementById('limitCount').textContent = timeLimit;
+            } else if (mode === 'limited') {
+                moveLimit = gridSize * gridSize * 3;
+                limitDisplay.style.display = 'block';
+                document.getElementById('limitCount').textContent = moveLimit;
+            } else {
+                limitDisplay.style.display = 'none';
+            }
+        }
+
+        function startNewGame() {
+            pieceSize = canvasSize / gridSize;
+            
+            if (!currentImage) {
+                currentImage = presetImages[0].generator();
+            }
+            
+            pieces = [];
+            moves = 0;
+            gameStarted = false;
+            showingHint = false;
+            clearInterval(timerInterval);
+            seconds = 0;
+            
+            updateTimer();
+            document.getElementById('movesCount').textContent = moves;
+            
+            if (gameMode === 'timed') {
+                document.getElementById('limitCount').textContent = timeLimit;
+            } else if (gameMode === 'limited') {
+                moveLimit = gridSize * gridSize * 3;
+                document.getElementById('limitCount').textContent = moveLimit;
+            }
+            
+            for (let row = 0; row < gridSize; row++) {
+                for (let col = 0; col < gridSize; col++) {
+                    pieces.push({
+                        correctRow: row,
+                        correctCol: col,
+                        currentRow: row,
+                        currentCol: col,
+                        id: row * gridSize + col
+                    });
+                }
+            }
+            
+            shufflePieces();
+            draw();
+            updateBestScores();
+        }
+
+        function shufflePieces() {
+            for (let i = pieces.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                const tempRow = pieces[i].currentRow;
+                const tempCol = pieces[i].currentCol;
+                pieces[i].currentRow = pieces[j].currentRow;
+                pieces[i].currentCol = pieces[j].currentCol;
+                pieces[j].currentRow = tempRow;
+                pieces[j].currentCol = tempCol;
+            }
+            
+            if (isComplete()) {
+                shufflePieces();
+            }
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvasSize, canvasSize);
+            
+            pieces.forEach(piece => {
+                drawPiece(piece);
+            });
+            
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+            ctx.lineWidth = 1;
+            
+            for (let i = 0; i <= gridSize; i++) {
+                const pos = i * pieceSize;
+                ctx.beginPath();
+                ctx.moveTo(pos, 0);
+                ctx.lineTo(pos, canvasSize);
+                ctx.stroke();
+                
+                ctx.beginPath();
+                ctx.moveTo(0, pos);
+                ctx.lineTo(canvasSize, pos);
+                ctx.stroke();
+            }
+            
+            if (selectedPiece) {
+                ctx.strokeStyle = '#ff0000';
+                ctx.lineWidth = 3;
+                ctx.strokeRect(
+                    selectedPiece.currentCol * pieceSize,
+                    selectedPiece.currentRow * pieceSize,
+                    pieceSize,
+                    pieceSize
+                );
+            }
+        }
+
+        function drawPiece(piece) {
+            const sourceX = piece.correctCol * pieceSize;
+            const sourceY = piece.correctRow * pieceSize;
+            const destX = piece.currentCol * pieceSize;
+            const destY = piece.currentRow * pieceSize;
+            
+            ctx.drawImage(
+                currentImage,
+                sourceX, sourceY, pieceSize, pieceSize,
+                destX, destY, pieceSize, pieceSize
+            );
+        }
+
+        function getPieceAt(row, col) {
+            return pieces.find(p => p.currentRow === row && p.currentCol === col);
+        }
+
+        canvas.addEventListener('click', function(e) {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            const col = Math.floor(x / pieceSize);
+            const row = Math.floor(y / pieceSize);
+            
+            if (!gameStarted) {
+                gameStarted = true;
+                startTimer();
+            }
+            
+            if (selectedPiece === null) {
+                selectedPiece = getPieceAt(row, col);
+                draw();
+            } else {
+                const clickedPiece = getPieceAt(row, col);
+                
+                const isAdjacent = (
+                    Math.abs(selectedPiece.currentRow - clickedPiece.currentRow) +
+                    Math.abs(selectedPiece.currentCol - clickedPiece.currentCol) === 1
+                );
+                
+                if (isAdjacent) {
+                    const tempRow = selectedPiece.currentRow;
+                    const tempCol = selectedPiece.currentCol;
+                    selectedPiece.currentRow = clickedPiece.currentRow;
+                    selectedPiece.currentCol = clickedPiece.currentCol;
+                    clickedPiece.currentRow = tempRow;
+                    clickedPiece.currentCol = tempCol;
+                    
+                    moves++;
+                    document.getElementById('movesCount').textContent = moves;
+                    
+                    if (gameMode === 'limited') {
+                        moveLimit--;
+                        document.getElementById('limitCount').textContent = moveLimit;
+                        if (moveLimit <= 0) {
+                            showGameOver('步数用完了！');
+                            return;
+                        }
+                    }
+                    
+                    if (isComplete()) {
+                        clearInterval(timerInterval);
+                        checkAndSaveScore();
+                        showSuccessMessage();
+                    }
+                }
+                
+                selectedPiece = null;
+                draw();
+            }
+        });
+
+        function isComplete() {
+            return pieces.every(piece => 
+                piece.currentRow === piece.correctRow && 
+                piece.currentCol === piece.correctCol
+            );
+        }
+
+        function startTimer() {
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                seconds++;
+                updateTimer();
+                
+                if (gameMode === 'timed') {
+                    const remaining = timeLimit - seconds;
+                    document.getElementById('limitCount').textContent = Math.max(0, remaining);
+                    if (remaining <= 0) {
+                        clearInterval(timerInterval);
+                        showGameOver('时间到！');
+                    }
+                }
+            }, 1000);
+        }
+
+        function updateTimer() {
+            const minutes = Math.floor(seconds / 60).toString().padStart(2, '0');
+            const secs = (seconds % 60).toString().padStart(2, '0');
+            document.getElementById('timer').textContent = `${minutes}:${secs}`;
+        }
+
+        function showSuccessMessage() {
+            document.getElementById('finalMoves').textContent = moves;
+            document.getElementById('finalTime').textContent = document.getElementById('timer').textContent;
+            document.getElementById('overlay').style.display = 'block';
+            document.getElementById('successMessage').style.display = 'block';
+        }
+
+        function showGameOver(reason) {
+            document.getElementById('gameOverReason').textContent = reason;
+            document.getElementById('overlay').style.display = 'block';
+            document.getElementById('gameOverMessage').style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('overlay').style.display = 'none';
+            document.getElementById('successMessage').style.display = 'none';
+            document.getElementById('gameOverMessage').style.display = 'none';
+        }
+
+        function closeModalAndNewGame() {
+            closeModal();
+            startNewGame();
+        }
+
+        function showHint() {
+            if (showingHint) {
+                showingHint = false;
+                draw();
+                return;
+            }
+            
+            showingHint = true;
+            ctx.clearRect(0, 0, canvasSize, canvasSize);
+            
+            ctx.drawImage(currentImage, 0, 0, canvasSize, canvasSize);
+            
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+            ctx.fillRect(0, 0, canvasSize, canvasSize);
+            
+            ctx.strokeStyle = 'rgba(255, 0, 0, 0.8)';
+            ctx.lineWidth = 2;
+            
+            for (let i = 0; i < gridSize; i++) {
+                for (let j = 0; j < gridSize; j++) {
+                    const piece = pieces.find(p => p.correctRow === i && p.correctCol === j);
+                    const currentPiece = pieces.find(p => p.currentRow === i && p.currentCol === j);
+                    
+                    if (piece.id !== currentPiece.id) {
+                        ctx.fillStyle = 'rgba(255, 0, 0, 0.2)';
+                        ctx.fillRect(j * pieceSize, i * pieceSize, pieceSize, pieceSize);
+                    }
+                }
+            }
+            
+            setTimeout(() => {
+                if (showingHint) {
+                    showingHint = false;
+                    draw();
+                }
+            }, 2000);
+        }
+
+        function checkAndSaveScore() {
+            const key = `puzzle_best_${gridSize}x${gridSize}_${gameMode}`;
+            const saved = localStorage.getItem(key);
+            
+            if (!saved || moves < parseInt(saved)) {
+                localStorage.setItem(key, moves.toString());
+                document.getElementById('newRecord').style.display = 'block';
+            } else {
+                document.getElementById('newRecord').style.display = 'none';
+            }
+        }
+
+        function updateBestScores() {
+            const container = document.getElementById('bestScores');
+            let html = '<div class="best-scores-title">🏆 最佳成绩</div>';
+            
+            const modes = {
+                classic: '经典',
+                timed: '限时',
+                limited: '步数'
+            };
+            
+            const difficulties = [3, 4, 5, 6];
+            difficulties.forEach(d => {
+                Object.keys(modes).forEach(m => {
+                    const key = `puzzle_best_${d}x${d}_${m}`;
+                    const saved = localStorage.getItem(key);
+                    if (saved) {
+                        html += `<p>${d}×${d} ${modes[m]}: ${saved}步</p>`;
+                    }
+                });
+            });
+            
+            container.innerHTML = html;
+        }
+
+        initImageSelector();
+        startNewGame();
+    </script>
+</body>
+</html>
