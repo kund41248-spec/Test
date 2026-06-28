@@ -12,95 +12,181 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 20px;
+            padding: 30px 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Animated background particles */
+        .bg-particles {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .particle {
+            position: absolute;
+            border-radius: 50%;
+            animation: floatUp linear infinite;
+            opacity: 0;
+        }
+
+        @keyframes floatUp {
+            0% { transform: translateY(0) scale(0); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(-100vh) scale(1); opacity: 0; }
         }
 
         h1 {
             color: white;
-            margin-bottom: 20px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-            font-size: 2.5em;
+            margin-bottom: 25px;
+            font-size: 2.8em;
+            font-weight: 800;
+            letter-spacing: 2px;
+            text-shadow: 0 0 40px rgba(102, 126, 234, 0.6), 0 0 80px rgba(118, 75, 162, 0.4);
+            position: relative;
+            z-index: 1;
+            animation: titleGlow 3s ease-in-out infinite;
+        }
+
+        @keyframes titleGlow {
+            0%, 100% { text-shadow: 0 0 40px rgba(102, 126, 234, 0.6), 0 0 80px rgba(118, 75, 162, 0.4); }
+            50% { text-shadow: 0 0 60px rgba(102, 126, 234, 0.9), 0 0 120px rgba(118, 75, 162, 0.7), 0 0 160px rgba(102, 126, 234, 0.3); }
         }
 
         .game-container {
-            background: white;
-            border-radius: 15px;
-            padding: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 24px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 80px rgba(102, 126, 234, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.1);
             display: flex;
-            gap: 25px;
+            gap: 30px;
             flex-wrap: wrap;
             justify-content: center;
-            max-width: 1000px;
+            max-width: 1050px;
+            position: relative;
+            z-index: 1;
         }
 
         .controls {
             display: flex;
             flex-direction: column;
-            gap: 12px;
-            min-width: 180px;
+            gap: 14px;
+            min-width: 200px;
         }
 
+        /* ===== BUTTONS ===== */
         .btn {
-            padding: 12px 20px;
-            font-size: 16px;
+            padding: 13px 22px;
+            font-size: 15px;
             border: none;
-            border-radius: 8px;
+            border-radius: 12px;
             cursor: pointer;
-            transition: all 0.3s ease;
-            font-weight: bold;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::after {
+            content: '';
+            position: absolute;
+            top: -50%; left: -50%;
+            width: 200%; height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 60%);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .btn:hover::after {
+            opacity: 1;
         }
 
         .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn:active {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
         }
 
         .btn-primary {
-            background: #667eea;
+            background: linear-gradient(135deg, #667eea, #764ba2);
             color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:hover {
+            box-shadow: 0 8px 30px rgba(102, 126, 234, 0.6);
         }
 
         .btn-secondary {
-            background: #764ba2;
+            background: linear-gradient(135deg, #f093fb, #f5576c);
             color: white;
+            box-shadow: 0 4px 15px rgba(245, 87, 108, 0.4);
+        }
+
+        .btn-secondary:hover {
+            box-shadow: 0 8px 30px rgba(245, 87, 108, 0.6);
         }
 
         .btn-success {
-            background: #28a745;
+            background: linear-gradient(135deg, #11998e, #38ef7d);
             color: white;
+            box-shadow: 0 4px 15px rgba(17, 153, 142, 0.4);
+        }
+
+        .btn-success:hover {
+            box-shadow: 0 8px 30px rgba(17, 153, 142, 0.6);
         }
 
         .btn-warning {
-            background: #ffc107;
+            background: linear-gradient(135deg, #f7971e, #ffd200);
             color: #333;
+            box-shadow: 0 4px 15px rgba(247, 151, 30, 0.4);
         }
 
         .btn-info {
-            background: #17a2b8;
+            background: linear-gradient(135deg, #00c6ff, #0072ff);
             color: white;
+            box-shadow: 0 4px 15px rgba(0, 198, 255, 0.4);
         }
 
+        /* ===== SECTION CARDS ===== */
         .section {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 16px;
+            border-radius: 14px;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
         }
 
         .section-title {
-            font-size: 14px;
-            font-weight: bold;
-            color: #666;
-            margin-bottom: 10px;
+            font-size: 12px;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 12px;
             text-transform: uppercase;
+            letter-spacing: 2px;
         }
 
+        /* ===== DIFFICULTY BUTTONS ===== */
         .difficulty-buttons {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -108,27 +194,32 @@
         }
 
         .diff-btn {
-            padding: 10px;
-            font-size: 14px;
-            border: 2px solid #ddd;
-            border-radius: 6px;
+            padding: 10px 8px;
+            font-size: 13px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
             cursor: pointer;
-            transition: all 0.2s ease;
-            font-weight: bold;
-            background: white;
+            transition: all 0.25s ease;
+            font-weight: 600;
+            background: rgba(255, 255, 255, 0.05);
+            color: rgba(255, 255, 255, 0.7);
         }
 
         .diff-btn:hover {
-            border-color: #667eea;
+            border-color: rgba(102, 126, 234, 0.6);
             color: #667eea;
+            background: rgba(102, 126, 234, 0.1);
+            transform: translateY(-2px);
         }
 
         .diff-btn.active {
-            background: #667eea;
+            background: linear-gradient(135deg, #667eea, #764ba2);
             color: white;
-            border-color: #667eea;
+            border-color: transparent;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.5);
         }
 
+        /* ===== MODE BUTTONS ===== */
         .mode-buttons {
             display: flex;
             flex-direction: column;
@@ -136,28 +227,33 @@
         }
 
         .mode-btn {
-            padding: 10px;
-            font-size: 14px;
-            border: 2px solid #ddd;
-            border-radius: 6px;
+            padding: 10px 12px;
+            font-size: 13px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
             cursor: pointer;
-            transition: all 0.2s ease;
-            font-weight: bold;
-            background: white;
+            transition: all 0.25s ease;
+            font-weight: 600;
+            background: rgba(255, 255, 255, 0.05);
+            color: rgba(255, 255, 255, 0.7);
             text-align: left;
         }
 
         .mode-btn:hover {
-            border-color: #764ba2;
-            color: #764ba2;
+            border-color: rgba(240, 147, 251, 0.6);
+            color: #f093fb;
+            background: rgba(240, 147, 251, 0.1);
+            transform: translateY(-2px);
         }
 
         .mode-btn.active {
-            background: #764ba2;
+            background: linear-gradient(135deg, #f093fb, #f5576c);
             color: white;
-            border-color: #764ba2;
+            border-color: transparent;
+            box-shadow: 0 4px 15px rgba(245, 87, 108, 0.5);
         }
 
+        /* ===== IMAGE SELECTOR ===== */
         .image-selector {
             display: flex;
             flex-wrap: wrap;
@@ -165,82 +261,147 @@
         }
 
         .image-thumb {
-            width: 50px;
-            height: 50px;
-            border: 2px solid #ddd;
-            border-radius: 6px;
+            width: 52px;
+            height: 52px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.3s ease;
             object-fit: cover;
+            background: rgba(255, 255, 255, 0.05);
         }
 
         .image-thumb:hover {
-            border-color: #667eea;
-            transform: scale(1.1);
+            border-color: rgba(102, 126, 234, 0.8);
+            transform: scale(1.12);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
         }
 
         .image-thumb.active {
             border-color: #667eea;
-            box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.3);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.4), 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        /* ===== CANVAS ===== */
+        .canvas-wrapper {
+            position: relative;
         }
 
         #gameCanvas {
-            border: 3px solid #333;
-            border-radius: 8px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
             cursor: pointer;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            box-shadow: 0 8px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05);
+            transition: box-shadow 0.4s ease;
         }
 
+        #gameCanvas:hover {
+            box-shadow: 0 12px 50px rgba(0, 0, 0, 0.5), 0 0 30px rgba(102, 126, 234, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.1);
+        }
+
+        /* ===== INFO DISPLAY ===== */
         .info {
             text-align: center;
-            margin-top: 15px;
-            font-size: 18px;
-            font-weight: bold;
-            color: #333;
+            margin-top: 4px;
+            font-size: 16px;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.8);
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 14px;
+            padding: 12px;
+            backdrop-filter: blur(10px);
+        }
+
+        .info p {
+            margin: 6px 0;
         }
 
         .moves-count {
             color: #667eea;
+            font-weight: 800;
         }
 
         .timer-count {
-            color: #28a745;
+            color: #38ef7d;
+            font-weight: 800;
         }
 
         .limit-count {
-            color: #dc3545;
+            color: #f5576c;
+            font-weight: 800;
         }
 
+        /* ===== BEST SCORES ===== */
+        .best-scores {
+            margin-top: 4px;
+            padding: 12px 14px;
+            background: rgba(56, 239, 125, 0.08);
+            border: 1px solid rgba(56, 239, 125, 0.2);
+            border-radius: 12px;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+        }
+
+        .best-scores-title {
+            font-weight: 700;
+            margin-bottom: 6px;
+            font-size: 13px;
+            color: #38ef7d;
+            letter-spacing: 1px;
+        }
+
+        .best-scores p {
+            margin: 3px 0;
+            opacity: 0.8;
+        }
+
+        /* ===== SUCCESS / GAME-OVER MODALS ===== */
         .success-message, .game-over-message {
             display: none;
             position: fixed;
             top: 50%;
             left: 50%;
-            transform: translate(-50%, -50%);
-            background: white;
-            padding: 35px;
-            border-radius: 15px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+            transform: translate(-50%, -50%) scale(0.9);
+            background: rgba(30, 30, 60, 0.95);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 40px 35px;
+            border-radius: 24px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), 0 0 80px rgba(102, 126, 234, 0.2);
             text-align: center;
             z-index: 1000;
-            min-width: 300px;
+            min-width: 340px;
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
+            opacity: 0;
+        }
+
+        .success-message.show, .game-over-message.show {
+            display: block;
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 1;
         }
 
         .success-message h2 {
-            color: #28a745;
+            color: #38ef7d;
             margin-bottom: 15px;
-            font-size: 2em;
+            font-size: 2.2em;
+            text-shadow: 0 0 30px rgba(56, 239, 125, 0.5);
         }
 
         .game-over-message h2 {
-            color: #dc3545;
+            color: #f5576c;
             margin-bottom: 15px;
-            font-size: 2em;
+            font-size: 2.2em;
+            text-shadow: 0 0 30px rgba(245, 87, 108, 0.5);
         }
 
         .success-message p, .game-over-message p {
             margin: 10px 0;
-            font-size: 18px;
+            font-size: 17px;
+            color: rgba(255, 255, 255, 0.8);
         }
 
         .success-message button, .game-over-message button {
@@ -255,38 +416,61 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.5);
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
             z-index: 999;
+            transition: opacity 0.3s ease;
         }
 
-        .best-scores {
-            margin-top: 15px;
-            padding: 10px;
-            background: #e8f5e9;
-            border-radius: 6px;
-            font-size: 13px;
-            color: #2e7d32;
+        .overlay.show {
+            display: block;
         }
 
-        .best-scores-title {
-            font-weight: bold;
-            margin-bottom: 5px;
+        #newRecord {
+            background: linear-gradient(135deg, #ffd200, #f7971e);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-size: 1.2em;
+            animation: recordPulse 0.6s ease-in-out infinite alternate;
         }
 
-        .best-scores p {
-            margin: 3px 0;
+        @keyframes recordPulse {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.08); }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .game-container {
+                flex-direction: column;
+                align-items: center;
+                padding: 20px;
+                gap: 20px;
+            }
+            #gameCanvas {
+                width: 100%;
+                height: auto;
+            }
+            h1 {
+                font-size: 2em;
+            }
         }
     </style>
 </head>
 <body>
+    <!-- Animated background particles -->
+    <canvas class="bg-particles" id="bgParticles"></canvas>
+
     <h1>🧩 拼图小游戏</h1>
-    
+
     <div class="game-container">
         <div class="controls">
             <button class="btn btn-primary" onclick="startNewGame()">🎮 新游戏</button>
             <button class="btn btn-secondary" onclick="loadImage()">📷 上传图片</button>
             <button class="btn btn-success" onclick="showHint()">💡 提示</button>
-            
+
             <div class="section">
                 <div class="section-title">难度等级</div>
                 <div class="difficulty-buttons">
@@ -296,7 +480,7 @@
                     <button class="diff-btn" onclick="setDifficulty(6)" id="diff-6">专家 6×6</button>
                 </div>
             </div>
-            
+
             <div class="section">
                 <div class="section-title">游戏模式</div>
                 <div class="mode-buttons">
@@ -305,24 +489,26 @@
                     <button class="mode-btn" onclick="setGameMode('limited')">📊 步数限制</button>
                 </div>
             </div>
-            
+
             <div class="section">
                 <div class="section-title">选择图片</div>
                 <div class="image-selector" id="imageSelector"></div>
             </div>
-            
+
             <div class="info">
                 <p>移动: <span class="moves-count" id="movesCount">0</span></p>
                 <p>时间: <span class="timer-count" id="timer">00:00</span></p>
                 <p id="limitDisplay" style="display: none;">剩余: <span class="limit-count" id="limitCount">0</span></p>
             </div>
-            
+
             <div class="best-scores" id="bestScores">
                 <div class="best-scores-title">🏆 最佳成绩</div>
             </div>
         </div>
-        
-        <canvas id="gameCanvas" width="600" height="600"></canvas>
+
+        <div class="canvas-wrapper">
+            <canvas id="gameCanvas" width="600" height="600"></canvas>
+        </div>
     </div>
 
     <div class="overlay" id="overlay"></div>
@@ -330,7 +516,7 @@
         <h2>🎉 恭喜完成！</h2>
         <p>移动次数: <span id="finalMoves">0</span></p>
         <p>用时: <span id="finalTime">00:00</span></p>
-        <p id="newRecord" style="color: #ffc107; font-weight: bold; display: none;">🌟 新纪录！</p>
+        <p id="newRecord" style="display: none;">🌟 新纪录！</p>
         <button class="btn btn-primary" onclick="closeModalAndNewGame()">再玩一次</button>
         <button class="btn btn-secondary" onclick="closeModal()">关闭</button>
     </div>
@@ -347,6 +533,62 @@
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         const canvasSize = 600;
+
+        // ===== Background particles =====
+        const bgCanvas = document.getElementById('bgParticles');
+        const bgCtx = bgCanvas.getContext('2d');
+        let particles = [];
+
+        function resizeBgCanvas() {
+            bgCanvas.width = window.innerWidth;
+            bgCanvas.height = window.innerHeight;
+        }
+        resizeBgCanvas();
+        window.addEventListener('resize', resizeBgCanvas);
+
+        function createParticle() {
+            return {
+                x: Math.random() * bgCanvas.width,
+                y: bgCanvas.height + 10,
+                size: Math.random() * 3 + 1,
+                speed: Math.random() * 1.5 + 0.5,
+                opacity: Math.random() * 0.4 + 0.1,
+                hue: Math.random() * 60 + 240 // blue-purple range
+            };
+        }
+
+        // Initialize particles
+        for (let i = 0; i < 60; i++) {
+            const p = createParticle();
+            p.y = Math.random() * bgCanvas.height; // scatter initially
+            particles.push(p);
+        }
+
+        function animateParticles() {
+            bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
+
+            particles.forEach((p, i) => {
+                p.y -= p.speed;
+                p.opacity -= 0.0003;
+                if (p.y < -10 || p.opacity <= 0) {
+                    particles[i] = createParticle();
+                }
+                bgCtx.beginPath();
+                bgCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                bgCtx.fillStyle = `hsla(${p.hue}, 70%, 70%, ${p.opacity})`;
+                bgCtx.fill();
+            });
+
+            // Keep particle count
+            while (particles.length < 60) {
+                particles.push(createParticle());
+            }
+
+            requestAnimationFrame(animateParticles);
+        }
+        animateParticles();
+
+        // ===== Game logic =====
         
         let pieces = [];
         let selectedPiece = null;
@@ -893,52 +1135,103 @@
             }
         }
 
+
         function draw() {
+            const gap = Math.max(2, pieceSize * 0.04);
             ctx.clearRect(0, 0, canvasSize, canvasSize);
-            
+
+            // Dark background for gaps between pieces
+            ctx.fillStyle = '#1a1a2e';
+            ctx.fillRect(0, 0, canvasSize, canvasSize);
+
             pieces.forEach(piece => {
-                drawPiece(piece);
+                drawPiece(piece, gap);
             });
-            
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
-            ctx.lineWidth = 1;
-            
-            for (let i = 0; i <= gridSize; i++) {
-                const pos = i * pieceSize;
+
+            // Draw bevel effect on each piece (top-left highlight, bottom-right shadow)
+            pieces.forEach(piece => {
+                const x = piece.currentCol * pieceSize + gap;
+                const y = piece.currentRow * pieceSize + gap;
+                const w = pieceSize - gap * 2;
+
+                // Top + left highlight
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+                ctx.lineWidth = 1.5;
                 ctx.beginPath();
-                ctx.moveTo(pos, 0);
-                ctx.lineTo(pos, canvasSize);
+                ctx.moveTo(x, y + w);
+                ctx.lineTo(x, y);
+                ctx.lineTo(x + w, y);
                 ctx.stroke();
-                
+
+                // Bottom + right shadow
+                ctx.strokeStyle = 'rgba(0, 0, 0, 0.4)';
                 ctx.beginPath();
-                ctx.moveTo(0, pos);
-                ctx.lineTo(canvasSize, pos);
+                ctx.moveTo(x + w, y);
+                ctx.lineTo(x + w, y + w);
+                ctx.lineTo(x, y + w);
                 ctx.stroke();
-            }
-            
+            });
+
             if (selectedPiece) {
-                ctx.strokeStyle = '#ff0000';
+                const sx = selectedPiece.currentCol * pieceSize;
+                const sy = selectedPiece.currentRow * pieceSize;
+
+                // Outer purple glow
+                ctx.shadowColor = '#667eea';
+                ctx.shadowBlur = 18;
+                ctx.strokeStyle = '#667eea';
                 ctx.lineWidth = 3;
-                ctx.strokeRect(
-                    selectedPiece.currentCol * pieceSize,
-                    selectedPiece.currentRow * pieceSize,
-                    pieceSize,
-                    pieceSize
-                );
+                ctx.strokeRect(sx + 1.5, sy + 1.5, pieceSize - 3, pieceSize - 3);
+                ctx.shadowBlur = 0;
+
+                // Inner white border
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+                ctx.lineWidth = 1.5;
+                ctx.strokeRect(sx + 3, sy + 3, pieceSize - 6, pieceSize - 6);
             }
         }
 
-        function drawPiece(piece) {
+        function drawPiece(piece, gap) {
             const sourceX = piece.correctCol * pieceSize;
             const sourceY = piece.correctRow * pieceSize;
-            const destX = piece.currentCol * pieceSize;
-            const destY = piece.currentRow * pieceSize;
-            
+            const destX = piece.currentCol * pieceSize + gap;
+            const destY = piece.currentRow * pieceSize + gap;
+            const drawSize = pieceSize - gap * 2;
+
+            // Clip to rounded rectangle for each piece
+            const radius = Math.max(3, pieceSize * 0.06);
+            ctx.save();
+            roundRect(ctx, destX, destY, drawSize, drawSize, radius);
+            ctx.clip();
+
             ctx.drawImage(
                 currentImage,
                 sourceX, sourceY, pieceSize, pieceSize,
-                destX, destY, pieceSize, pieceSize
+                destX - gap, destY - gap, pieceSize, pieceSize
             );
+
+            ctx.restore();
+
+            // Subtle border around each piece
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+            ctx.lineWidth = 0.5;
+            roundRect(ctx, destX, destY, drawSize, drawSize, radius);
+            ctx.stroke();
+        }
+
+        // Helper: draw rounded rectangle path
+        function roundRect(ctx, x, y, w, h, r) {
+            ctx.beginPath();
+            ctx.moveTo(x + r, y);
+            ctx.lineTo(x + w - r, y);
+            ctx.arcTo(x + w, y, x + w, y + r, r);
+            ctx.lineTo(x + w, y + h - r);
+            ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+            ctx.lineTo(x + r, y + h);
+            ctx.arcTo(x, y + h, x, y + h - r, r);
+            ctx.lineTo(x, y + r);
+            ctx.arcTo(x, y, x + r, y, r);
+            ctx.closePath();
         }
 
         function getPieceAt(row, col) {
@@ -949,53 +1242,54 @@
             const rect = canvas.getBoundingClientRect();
             const x = e.clientX - rect.left;
             const y = e.clientY - rect.top;
-            
+
             const col = Math.floor(x / pieceSize);
             const row = Math.floor(y / pieceSize);
-            
+
             if (!gameStarted) {
                 gameStarted = true;
                 startTimer();
             }
-            
+
             if (selectedPiece === null) {
                 selectedPiece = getPieceAt(row, col);
                 draw();
             } else {
                 const clickedPiece = getPieceAt(row, col);
-                
-                const isAdjacent = (
-                    Math.abs(selectedPiece.currentRow - clickedPiece.currentRow) +
-                    Math.abs(selectedPiece.currentCol - clickedPiece.currentCol) === 1
-                );
-                
-                if (isAdjacent) {
-                    const tempRow = selectedPiece.currentRow;
-                    const tempCol = selectedPiece.currentCol;
-                    selectedPiece.currentRow = clickedPiece.currentRow;
-                    selectedPiece.currentCol = clickedPiece.currentCol;
-                    clickedPiece.currentRow = tempRow;
-                    clickedPiece.currentCol = tempCol;
-                    
-                    moves++;
-                    document.getElementById('movesCount').textContent = moves;
-                    
-                    if (gameMode === 'limited') {
-                        moveLimit--;
-                        document.getElementById('limitCount').textContent = moveLimit;
-                        if (moveLimit <= 0) {
-                            showGameOver('步数用完了！');
-                            return;
-                        }
-                    }
-                    
-                    if (isComplete()) {
-                        clearInterval(timerInterval);
-                        checkAndSaveScore();
-                        showSuccessMessage();
+
+                // Click same piece = deselect
+                if (clickedPiece === selectedPiece) {
+                    selectedPiece = null;
+                    draw();
+                    return;
+                }
+
+                // Swap ANY two pieces (no adjacency restriction)
+                const tempRow = selectedPiece.currentRow;
+                const tempCol = selectedPiece.currentCol;
+                selectedPiece.currentRow = clickedPiece.currentRow;
+                selectedPiece.currentCol = clickedPiece.currentCol;
+                clickedPiece.currentRow = tempRow;
+                clickedPiece.currentCol = tempCol;
+
+                moves++;
+                document.getElementById('movesCount').textContent = moves;
+
+                if (gameMode === 'limited') {
+                    moveLimit--;
+                    document.getElementById('limitCount').textContent = moveLimit;
+                    if (moveLimit <= 0) {
+                        showGameOver('步数用完了！');
+                        return;
                     }
                 }
-                
+
+                if (isComplete()) {
+                    clearInterval(timerInterval);
+                    checkAndSaveScore();
+                    showSuccessMessage();
+                }
+
                 selectedPiece = null;
                 draw();
             }
@@ -1034,20 +1328,35 @@
         function showSuccessMessage() {
             document.getElementById('finalMoves').textContent = moves;
             document.getElementById('finalTime').textContent = document.getElementById('timer').textContent;
-            document.getElementById('overlay').style.display = 'block';
-            document.getElementById('successMessage').style.display = 'block';
+            const overlay = document.getElementById('overlay');
+            const msg = document.getElementById('successMessage');
+            overlay.classList.add('show');
+            msg.classList.add('show');
         }
 
         function showGameOver(reason) {
             document.getElementById('gameOverReason').textContent = reason;
-            document.getElementById('overlay').style.display = 'block';
-            document.getElementById('gameOverMessage').style.display = 'block';
+            const overlay = document.getElementById('overlay');
+            const msg = document.getElementById('gameOverMessage');
+            overlay.classList.add('show');
+            msg.classList.add('show');
         }
 
         function closeModal() {
-            document.getElementById('overlay').style.display = 'none';
-            document.getElementById('successMessage').style.display = 'none';
-            document.getElementById('gameOverMessage').style.display = 'none';
+            const overlay = document.getElementById('overlay');
+            const successMsg = document.getElementById('successMessage');
+            const gameOverMsg = document.getElementById('gameOverMessage');
+            overlay.classList.remove('show');
+            successMsg.classList.remove('show');
+            gameOverMsg.classList.remove('show');
+            // hide after transition
+            setTimeout(() => {
+                if (!overlay.classList.contains('show')) {
+                    overlay.style.display = 'none';
+                    successMsg.style.display = 'none';
+                    gameOverMsg.style.display = 'none';
+                }
+            }, 300);
         }
 
         function closeModalAndNewGame() {
@@ -1065,6 +1374,8 @@
             showingHint = true;
             ctx.clearRect(0, 0, canvasSize, canvasSize);
             
+            ctx.fillStyle = '#1a1a2e';
+            ctx.fillRect(0, 0, canvasSize, canvasSize);
             ctx.drawImage(currentImage, 0, 0, canvasSize, canvasSize);
             
             ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
