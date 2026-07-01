@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>拼图小游戏 - 升级版</title>
+    <title>拼图小游戏 - 交换模式</title>
     <style>
         * {
             margin: 0;
@@ -23,7 +23,6 @@
             overflow-x: hidden;
         }
 
-        /* Animated background particles */
         .bg-particles {
             position: fixed;
             top: 0; left: 0;
@@ -32,35 +31,13 @@
             z-index: 0;
         }
 
-        .particle {
-            position: absolute;
-            border-radius: 50%;
-            animation: floatUp linear infinite;
-            opacity: 0;
-        }
-
-        @keyframes floatUp {
-            0% { transform: translateY(0) scale(0); opacity: 0; }
-            10% { opacity: 1; }
-            90% { opacity: 1; }
-            100% { transform: translateY(-100vh) scale(1); opacity: 0; }
-        }
-
         h1 {
             color: white;
-            margin-bottom: 25px;
-            font-size: 2.8em;
+            margin-bottom: 20px;
+            font-size: 2.5em;
             font-weight: 800;
-            letter-spacing: 2px;
-            text-shadow: 0 0 40px rgba(102, 126, 234, 0.6), 0 0 80px rgba(118, 75, 162, 0.4);
-            position: relative;
-            z-index: 1;
-            animation: titleGlow 3s ease-in-out infinite;
-        }
-
-        @keyframes titleGlow {
-            0%, 100% { text-shadow: 0 0 40px rgba(102, 126, 234, 0.6), 0 0 80px rgba(118, 75, 162, 0.4); }
-            50% { text-shadow: 0 0 60px rgba(102, 126, 234, 0.9), 0 0 120px rgba(118, 75, 162, 0.7), 0 0 160px rgba(102, 126, 234, 0.3); }
+            letter-spacing: 1px;
+            text-shadow: 0 0 30px rgba(102, 126, 234, 0.5);
         }
 
         .game-container {
@@ -85,6 +62,7 @@
             flex-direction: column;
             gap: 14px;
             min-width: 200px;
+            max-width: 240px;
         }
 
         /* ===== BUTTONS ===== */
@@ -111,9 +89,7 @@
             transition: opacity 0.3s;
         }
 
-        .btn:hover::after {
-            opacity: 1;
-        }
+        .btn:hover::after { opacity: 1; }
 
         .btn:hover {
             transform: translateY(-3px);
@@ -131,9 +107,7 @@
             box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
         }
 
-        .btn-primary:hover {
-            box-shadow: 0 8px 30px rgba(102, 126, 234, 0.6);
-        }
+        .btn-primary:hover { box-shadow: 0 8px 30px rgba(102, 126, 234, 0.6); }
 
         .btn-secondary {
             background: linear-gradient(135deg, #f093fb, #f5576c);
@@ -141,9 +115,7 @@
             box-shadow: 0 4px 15px rgba(245, 87, 108, 0.4);
         }
 
-        .btn-secondary:hover {
-            box-shadow: 0 8px 30px rgba(245, 87, 108, 0.6);
-        }
+        .btn-secondary:hover { box-shadow: 0 8px 30px rgba(245, 87, 108, 0.6); }
 
         .btn-success {
             background: linear-gradient(135deg, #11998e, #38ef7d);
@@ -151,21 +123,7 @@
             box-shadow: 0 4px 15px rgba(17, 153, 142, 0.4);
         }
 
-        .btn-success:hover {
-            box-shadow: 0 8px 30px rgba(17, 153, 142, 0.6);
-        }
-
-        .btn-warning {
-            background: linear-gradient(135deg, #f7971e, #ffd200);
-            color: #333;
-            box-shadow: 0 4px 15px rgba(247, 151, 30, 0.4);
-        }
-
-        .btn-info {
-            background: linear-gradient(135deg, #00c6ff, #0072ff);
-            color: white;
-            box-shadow: 0 4px 15px rgba(0, 198, 255, 0.4);
-        }
+        .btn-success:hover { box-shadow: 0 8px 30px rgba(17, 153, 142, 0.6); }
 
         /* ===== SECTION CARDS ===== */
         .section {
@@ -254,6 +212,26 @@
         }
 
         /* ===== IMAGE SELECTOR ===== */
+        .image-selector-wrap {
+            max-height: 280px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        .image-selector-wrap::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        .image-selector-wrap::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.05);
+            border-radius: 3px;
+        }
+
+        .image-selector-wrap::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.2);
+            border-radius: 3px;
+        }
+
         .image-selector {
             display: flex;
             flex-wrap: wrap;
@@ -269,6 +247,7 @@
             transition: all 0.3s ease;
             object-fit: cover;
             background: rgba(255, 255, 255, 0.05);
+            flex-shrink: 0;
         }
 
         .image-thumb:hover {
@@ -280,6 +259,15 @@
         .image-thumb.active {
             border-color: #667eea;
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.4), 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .image-thumb.add-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: rgba(255,255,255,0.6);
+            border-style: dashed;
         }
 
         /* ===== CANVAS ===== */
@@ -313,23 +301,19 @@
             backdrop-filter: blur(10px);
         }
 
-        .info p {
-            margin: 6px 0;
-        }
+        .info p { margin: 6px 0; }
 
-        .moves-count {
-            color: #667eea;
-            font-weight: 800;
-        }
+        .moves-count { color: #667eea; font-weight: 800; }
+        .timer-count { color: #38ef7d; font-weight: 800; }
+        .limit-count { color: #f5576c; font-weight: 800; }
 
-        .timer-count {
-            color: #38ef7d;
-            font-weight: 800;
-        }
-
-        .limit-count {
-            color: #f5576c;
-            font-weight: 800;
+        /* Instruction text */
+        .instruction {
+            font-size: 11px;
+            color: rgba(255,255,255,0.5);
+            text-align: center;
+            margin-top: 2px;
+            line-height: 1.5;
         }
 
         /* ===== BEST SCORES ===== */
@@ -342,6 +326,8 @@
             font-size: 12px;
             color: rgba(255, 255, 255, 0.7);
             backdrop-filter: blur(10px);
+            max-height: 150px;
+            overflow-y: auto;
         }
 
         .best-scores-title {
@@ -352,10 +338,7 @@
             letter-spacing: 1px;
         }
 
-        .best-scores p {
-            margin: 3px 0;
-            opacity: 0.8;
-        }
+        .best-scores p { margin: 3px 0; opacity: 0.8; }
 
         /* ===== SUCCESS / GAME-OVER MODALS ===== */
         .success-message, .game-over-message {
@@ -412,10 +395,8 @@
         .overlay {
             display: none;
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
             background: rgba(0, 0, 0, 0.6);
             backdrop-filter: blur(4px);
             -webkit-backdrop-filter: blur(4px);
@@ -423,9 +404,7 @@
             transition: opacity 0.3s ease;
         }
 
-        .overlay.show {
-            display: block;
-        }
+        .overlay.show { display: block; }
 
         #newRecord {
             background: linear-gradient(135deg, #ffd200, #f7971e);
@@ -449,13 +428,9 @@
                 padding: 20px;
                 gap: 20px;
             }
-            #gameCanvas {
-                width: 100%;
-                height: auto;
-            }
-            h1 {
-                font-size: 2em;
-            }
+            #gameCanvas { width: 100%; height: auto; }
+            h1 { font-size: 2em; }
+            .controls { max-width: 100%; }
         }
     </style>
 </head>
@@ -492,13 +467,16 @@
 
             <div class="section">
                 <div class="section-title">选择图片</div>
-                <div class="image-selector" id="imageSelector"></div>
+                <div class="image-selector-wrap">
+                    <div class="image-selector" id="imageSelector"></div>
+                </div>
             </div>
 
             <div class="info">
                 <p>移动: <span class="moves-count" id="movesCount">0</span></p>
                 <p>时间: <span class="timer-count" id="timer">00:00</span></p>
                 <p id="limitDisplay" style="display: none;">剩余: <span class="limit-count" id="limitCount">0</span></p>
+                <p class="instruction">💡 点击选中拼图<br>再点击相邻拼图交换</p>
             </div>
 
             <div class="best-scores" id="bestScores">
@@ -534,7 +512,8 @@
         // SECTION 1: CONSTANTS & DOM REFS
         // ============================================================
         const CANVAS_SIZE = 600;
-        const SHUFFLE_FACTOR = 10;
+        const SHUFFLE_FACTOR = 15;
+        const LOCAL_IMAGE_COUNT = 4; // must match LOCAL_IMAGE_PATHS length
 
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
@@ -547,22 +526,20 @@
         const state = {
             gridSize: 3,
             tiles: [],
-            blankRow: 0,
-            blankCol: 0,
+            selectedRow: null,
+            selectedCol: null,
             moves: 0,
             seconds: 0,
             gameStarted: false,
             gameOver: false,
             timerInterval: null,
             currentImage: null,
-            currentImageIndex: 0,
+            currentImageIndex: LOCAL_IMAGE_COUNT, // default to first generated image
             showingHint: false,
             gameMode: 'classic',
             timeLimit: 60,
             moveLimit: 0,
         };
-
-        function pieceSize() { return CANVAS_SIZE / state.gridSize; }
 
         // ============================================================
         // SECTION 3: BACKGROUND PARTICLES
@@ -579,15 +556,15 @@
         function createParticle() {
             return {
                 x: Math.random() * bgCanvas.width,
-                y: bgCanvas.height + 10,
-                size: Math.random() * 3 + 1,
-                speed: Math.random() * 1.5 + 0.5,
-                opacity: Math.random() * 0.4 + 0.1,
-                hue: Math.random() * 60 + 240,
+                y: bgCanvas.height + 5,
+                size: Math.random() * 2 + 1,
+                speed: Math.random() * 1.2 + 0.3,
+                alpha: Math.random() * 0.3 + 0.1,
             };
         }
 
-        for (let i = 0; i < 60; i++) {
+        const PARTICLE_COUNT = 15;
+        for (let i = 0; i < PARTICLE_COUNT; i++) {
             const p = createParticle();
             p.y = Math.random() * bgCanvas.height;
             particles.push(p);
@@ -595,16 +572,14 @@
 
         function animateParticles() {
             bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
-            particles.forEach((p, i) => {
+            for (let i = 0; i < particles.length; i++) {
+                const p = particles[i];
                 p.y -= p.speed;
-                p.opacity -= 0.0003;
-                if (p.y < -10 || p.opacity <= 0) particles[i] = createParticle();
-                bgCtx.beginPath();
-                bgCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-                bgCtx.fillStyle = `hsla(${p.hue}, 70%, 70%, ${p.opacity})`;
-                bgCtx.fill();
-            });
-            while (particles.length < 60) particles.push(createParticle());
+                p.alpha -= 0.0002;
+                if (p.y < -10 || p.alpha <= 0) particles[i] = createParticle();
+                bgCtx.fillStyle = `rgba(150,180,255,${p.alpha})`;
+                bgCtx.fillRect(p.x, p.y, p.size, p.size);
+            }
             requestAnimationFrame(animateParticles);
         }
         animateParticles();
@@ -612,20 +587,81 @@
         // ============================================================
         // SECTION 4: IMAGE GENERATORS
         // ============================================================
+
+        // -- 4a. Drawing helpers --
+        function drawStar(ctx, cx, cy, spikes, outerR, innerR, color) {
+            let rot = -Math.PI / 2, step = Math.PI / spikes;
+            ctx.beginPath();
+            for (let i = 0; i < spikes; i++) {
+                ctx.lineTo(cx + Math.cos(rot) * outerR, cy + Math.sin(rot) * outerR); rot += step;
+                ctx.lineTo(cx + Math.cos(rot) * innerR, cy + Math.sin(rot) * innerR); rot += step;
+            }
+            ctx.closePath(); ctx.fillStyle = color; ctx.fill();
+        }
+
+        function drawHexagon(ctx, cx, cy, r) {
+            ctx.beginPath();
+            for (let i = 0; i < 6; i++) {
+                const a = Math.PI / 3 * i - Math.PI / 6;
+                i === 0 ? ctx.moveTo(cx + r * Math.cos(a), cy + r * Math.sin(a)) : ctx.lineTo(cx + r * Math.cos(a), cy + r * Math.sin(a));
+            }
+            ctx.closePath(); ctx.fill();
+        }
+
+        function adjustColor(color, amount) {
+            const h = color.replace('#', '');
+            return `#${[0, 2, 4].map(i => Math.max(0, Math.min(255, parseInt(h.substr(i, 2), 16) + amount)).toString(16).padStart(2, '0')).join('')}`;
+        }
+
+        // -- 4b. Drawing complex shapes --
+        function drawTree(ctx, x, y, h, color) {
+            // Trunk
+            ctx.fillStyle = '#8B4513';
+            ctx.fillRect(x - h * 0.06, y - h * 0.3, h * 0.12, h * 0.35);
+            // Canopy layers
+            ctx.fillStyle = color;
+            ctx.beginPath(); ctx.arc(x, y - h * 0.4, h * 0.35, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = adjustColor(color, 30);
+            ctx.beginPath(); ctx.arc(x - h * 0.1, y - h * 0.6, h * 0.28, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(x + h * 0.1, y - h * 0.55, h * 0.26, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = adjustColor(color, -20);
+            ctx.beginPath(); ctx.arc(x, y - h * 0.75, h * 0.2, 0, Math.PI * 2); ctx.fill();
+        }
+
+        function drawCloud(ctx, x, y, s) {
+            ctx.fillStyle = 'rgba(255,255,255,0.9)';
+            ctx.beginPath(); ctx.arc(x, y, s * 0.5, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(x + s * 0.35, y - s * 0.1, s * 0.4, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(x + s * 0.7, y, s * 0.45, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(x + s * 0.35, y + s * 0.15, s * 0.35, 0, Math.PI * 2); ctx.fill();
+        }
+
+        function drawBird(ctx, x, y, s) {
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(x - s, y, s, Math.PI * 0.2, Math.PI * 0.8);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(x + s, y, s, Math.PI * 0.2, Math.PI * 0.8);
+            ctx.stroke();
+        }
+
+        // -- 4c. Preset image generators --
         function createGradientBlocksImage() {
             const c = document.createElement('canvas');
             c.width = CANVAS_SIZE; c.height = CANVAS_SIZE;
             const cx = c.getContext('2d');
-            const colors = ['#FF6B6B','#4ECDC4','#45B7D1','#96CEB4','#FFEAA7','#DDA0DD','#98D8C8','#F7DC6F','#BB8FCE'];
+            const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#98D8C8', '#F7DC6F', '#BB8FCE'];
             for (let i = 0; i < 9; i++) {
-                const row = Math.floor(i/3), col = i%3;
-                const x = col*(CANVAS_SIZE/3), y = row*(CANVAS_SIZE/3);
-                const g = cx.createLinearGradient(x,y,x+CANVAS_SIZE/3,y+CANVAS_SIZE/3);
-                g.addColorStop(0, colors[i]); g.addColorStop(1, adjustColor(colors[i],-30));
-                cx.fillStyle = g; cx.fillRect(x,y,CANVAS_SIZE/3,CANVAS_SIZE/3);
+                const row = Math.floor(i / 3), col = i % 3;
+                const x = col * (CANVAS_SIZE / 3), y = row * (CANVAS_SIZE / 3);
+                const g = cx.createLinearGradient(x, y, x + CANVAS_SIZE / 3, y + CANVAS_SIZE / 3);
+                g.addColorStop(0, colors[i]); g.addColorStop(1, adjustColor(colors[i], -30));
+                cx.fillStyle = g; cx.fillRect(x, y, CANVAS_SIZE / 3, CANVAS_SIZE / 3);
                 cx.fillStyle = 'rgba(255,255,255,0.3)';
                 cx.font = 'bold 40px Arial'; cx.textAlign = 'center'; cx.textBaseline = 'middle';
-                cx.fillText(i+1, x+CANVAS_SIZE/6, y+CANVAS_SIZE/6);
+                cx.fillText(i + 1, x + CANVAS_SIZE / 6, y + CANVAS_SIZE / 6);
             }
             return c;
         }
@@ -634,14 +670,17 @@
             const c = document.createElement('canvas');
             c.width = CANVAS_SIZE; c.height = CANVAS_SIZE;
             const cx = c.getContext('2d');
-            const g = cx.createLinearGradient(0,0,0,CANVAS_SIZE);
-            g.addColorStop(0,'#0a0a2e'); g.addColorStop(0.5,'#1a1a4e'); g.addColorStop(1,'#0a0a2e');
-            cx.fillStyle = g; cx.fillRect(0,0,CANVAS_SIZE,CANVAS_SIZE);
-            for (let i = 0; i < 200; i++) {
-                cx.fillStyle = `rgba(255,255,255,${Math.random()*0.8+0.2})`;
-                cx.beginPath(); cx.arc(Math.random()*CANVAS_SIZE, Math.random()*CANVAS_SIZE, Math.random()*3+1, 0, Math.PI*2); cx.fill();
+            const g = cx.createLinearGradient(0, 0, 0, CANVAS_SIZE);
+            g.addColorStop(0, '#0a0a2e'); g.addColorStop(0.5, '#1a1a4e'); g.addColorStop(1, '#0a0a2e');
+            cx.fillStyle = g; cx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+            for (let i = 0; i < 250; i++) {
+                cx.fillStyle = `rgba(255,255,255,${Math.random() * 0.8 + 0.2})`;
+                cx.beginPath(); cx.arc(Math.random() * CANVAS_SIZE, Math.random() * CANVAS_SIZE, Math.random() * 3 + 1, 0, Math.PI * 2); cx.fill();
             }
-            for (let i = 0; i < 5; i++) drawStar(cx, Math.random()*CANVAS_SIZE, Math.random()*CANVAS_SIZE, 5, 20, 10, '#FFD700');
+            for (let i = 0; i < 8; i++) drawStar(cx, Math.random() * CANVAS_SIZE, Math.random() * CANVAS_SIZE, 5, 20, 10, '#FFD700');
+            // Milky way band
+            cx.fillStyle = 'rgba(200,200,255,0.05)';
+            cx.beginPath(); cx.ellipse(CANVAS_SIZE / 2, CANVAS_SIZE / 2, CANVAS_SIZE * 0.6, CANVAS_SIZE * 0.15, -0.3, 0, Math.PI * 2); cx.fill();
             return c;
         }
 
@@ -649,13 +688,17 @@
             const c = document.createElement('canvas');
             c.width = CANVAS_SIZE; c.height = CANVAS_SIZE;
             const cx = c.getContext('2d');
-            cx.fillStyle = '#87CEEB'; cx.fillRect(0,0,CANVAS_SIZE,CANVAS_SIZE);
-            const rc = ['#FF0000','#FF7F00','#FFFF00','#00FF00','#0000FF','#4B0082','#8B00FF'];
-            rc.forEach((clr,i) => {
-                cx.beginPath(); cx.arc(CANVAS_SIZE/2, CANVAS_SIZE+100, 400-i*30, Math.PI, 0);
+            cx.fillStyle = '#87CEEB'; cx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+            const rc = ['#FF0000', '#FF7F00', '#FFFF00', '#00FF00', '#0000FF', '#4B0082', '#8B00FF'];
+            rc.forEach((clr, i) => {
+                cx.beginPath(); cx.arc(CANVAS_SIZE / 2, CANVAS_SIZE + 100, 400 - i * 30, Math.PI, 0);
                 cx.lineWidth = 35; cx.strokeStyle = clr; cx.stroke();
             });
-            cx.fillStyle = '#FFF'; cx.beginPath(); cx.arc(CANVAS_SIZE/2, CANVAS_SIZE/3, 50, 0, Math.PI*2); cx.fill();
+            cx.fillStyle = '#FFF'; cx.beginPath(); cx.arc(CANVAS_SIZE / 2, CANVAS_SIZE / 3, 50, 0, Math.PI * 2); cx.fill();
+            // Clouds
+            drawCloud(cx, 100, 120, 80);
+            drawCloud(cx, 450, 80, 100);
+            drawCloud(cx, 500, 150, 60);
             return c;
         }
 
@@ -663,138 +706,473 @@
             const c = document.createElement('canvas');
             c.width = CANVAS_SIZE; c.height = CANVAS_SIZE;
             const cx = c.getContext('2d');
-            cx.fillStyle = '#2C3E50'; cx.fillRect(0,0,CANVAS_SIZE,CANVAS_SIZE);
+            cx.fillStyle = '#2C3E50'; cx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
             const shapes = [
-                {type:'circle',color:'#E74C3C',x:150,y:150,size:80},
-                {type:'triangle',color:'#3498DB',x:450,y:150,size:80},
-                {type:'square',color:'#2ECC71',x:300,y:300,size:80},
-                {type:'diamond',color:'#F39C12',x:150,y:450,size:80},
-                {type:'hexagon',color:'#9B59B6',x:450,y:450,size:60},
+                { type: 'circle', color: '#E74C3C', x: 150, y: 150, size: 80 },
+                { type: 'triangle', color: '#3498DB', x: 450, y: 150, size: 80 },
+                { type: 'square', color: '#2ECC71', x: 300, y: 300, size: 80 },
+                { type: 'diamond', color: '#F39C12', x: 150, y: 450, size: 80 },
+                { type: 'hexagon', color: '#9B59B6', x: 450, y: 450, size: 60 },
             ];
             shapes.forEach(s => {
                 cx.fillStyle = s.color;
-                switch(s.type) {
-                    case 'circle': cx.beginPath(); cx.arc(s.x,s.y,s.size,0,Math.PI*2); cx.fill(); break;
-                    case 'triangle': cx.beginPath(); cx.moveTo(s.x,s.y-s.size); cx.lineTo(s.x-s.size,s.y+s.size); cx.lineTo(s.x+s.size,s.y+s.size); cx.closePath(); cx.fill(); break;
-                    case 'square': cx.fillRect(s.x-s.size/2,s.y-s.size/2,s.size,s.size); break;
-                    case 'diamond': cx.beginPath(); cx.moveTo(s.x,s.y-s.size); cx.lineTo(s.x+s.size,s.y); cx.lineTo(s.x,s.y+s.size); cx.lineTo(s.x-s.size,s.y); cx.closePath(); cx.fill(); break;
-                    case 'hexagon': drawHexagon(cx,s.x,s.y,s.size); break;
+                switch (s.type) {
+                    case 'circle': cx.beginPath(); cx.arc(s.x, s.y, s.size, 0, Math.PI * 2); cx.fill(); break;
+                    case 'triangle': cx.beginPath(); cx.moveTo(s.x, s.y - s.size); cx.lineTo(s.x - s.size, s.y + s.size); cx.lineTo(s.x + s.size, s.y + s.size); cx.closePath(); cx.fill(); break;
+                    case 'square': cx.fillRect(s.x - s.size / 2, s.y - s.size / 2, s.size, s.size); break;
+                    case 'diamond': cx.beginPath(); cx.moveTo(s.x, s.y - s.size); cx.lineTo(s.x + s.size, s.y); cx.lineTo(s.x, s.y + s.size); cx.lineTo(s.x - s.size, s.y); cx.closePath(); cx.fill(); break;
+                    case 'hexagon': drawHexagon(cx, s.x, s.y, s.size); break;
                 }
             });
             return c;
         }
 
-        function createFlowerImage() {
+        // === NEW: 日落海滩 ===
+        function createSunsetBeachImage() {
             const c = document.createElement('canvas');
             c.width = CANVAS_SIZE; c.height = CANVAS_SIZE;
             const cx = c.getContext('2d');
-            const g = cx.createLinearGradient(0,0,CANVAS_SIZE,CANVAS_SIZE);
-            g.addColorStop(0,'#FFF5F5'); g.addColorStop(1,'#FFE4E1');
-            cx.fillStyle = g; cx.fillRect(0,0,CANVAS_SIZE,CANVAS_SIZE);
-            drawFlower(cx,150,150,'#FF69B4','#FF1493');
-            drawFlower(cx,450,150,'#FFB6C1','#FF69B4');
-            drawFlower(cx,300,350,'#FFC0CB','#FF69B4');
-            drawFlower(cx,150,450,'#DB7093','#FF1493');
-            drawFlower(cx,450,450,'#FFB6C1','#FF69B4');
-            return c;
-        }
-
-        function createMountainsImage() {
-            const c = document.createElement('canvas');
-            c.width = CANVAS_SIZE; c.height = CANVAS_SIZE;
-            const cx = c.getContext('2d');
-            const sg = cx.createLinearGradient(0,0,0,CANVAS_SIZE*0.6);
-            sg.addColorStop(0,'#87CEEB'); sg.addColorStop(1,'#E0F6FF');
-            cx.fillStyle = sg; cx.fillRect(0,0,CANVAS_SIZE,CANVAS_SIZE);
-            cx.fillStyle = '#FFF'; cx.beginPath(); cx.arc(100,100,40,0,Math.PI*2); cx.fill(); cx.beginPath(); cx.arc(130,80,30,0,Math.PI*2); cx.fill();
-            cx.fillStyle = '#8B7355'; cx.beginPath(); cx.moveTo(0,CANVAS_SIZE*0.6); cx.lineTo(150,CANVAS_SIZE*0.3); cx.lineTo(300,CANVAS_SIZE*0.5); cx.lineTo(450,CANVAS_SIZE*0.25); cx.lineTo(600,CANVAS_SIZE*0.55); cx.lineTo(600,CANVAS_SIZE); cx.lineTo(0,CANVAS_SIZE); cx.closePath(); cx.fill();
-            cx.fillStyle = '#654321'; cx.beginPath(); cx.moveTo(0,CANVAS_SIZE*0.75); cx.lineTo(100,CANVAS_SIZE*0.55); cx.lineTo(250,CANVAS_SIZE*0.7); cx.lineTo(400,CANVAS_SIZE*0.5); cx.lineTo(550,CANVAS_SIZE*0.7); cx.lineTo(600,CANVAS_SIZE); cx.lineTo(0,CANVAS_SIZE); cx.closePath(); cx.fill();
-            return c;
-        }
-
-        function createOceanImage() {
-            const c = document.createElement('canvas');
-            c.width = CANVAS_SIZE; c.height = CANVAS_SIZE;
-            const cx = c.getContext('2d');
-            const sg = cx.createLinearGradient(0,0,0,CANVAS_SIZE*0.5);
-            sg.addColorStop(0,'#1E90FF'); sg.addColorStop(1,'#87CEEB');
-            cx.fillStyle = sg; cx.fillRect(0,0,CANVAS_SIZE,CANVAS_SIZE*0.5);
-            const og = cx.createLinearGradient(0,CANVAS_SIZE*0.5,0,CANVAS_SIZE);
-            og.addColorStop(0,'#006994'); og.addColorStop(0.5,'#004D70'); og.addColorStop(1,'#00334D');
-            cx.fillStyle = og; cx.fillRect(0,CANVAS_SIZE*0.5,CANVAS_SIZE,CANVAS_SIZE*0.5);
-            for (let i=0;i<5;i++) {
-                cx.beginPath(); cx.moveTo(0,CANVAS_SIZE*0.5+i*60);
-                for (let x=0;x<=CANVAS_SIZE;x+=20) cx.lineTo(x,CANVAS_SIZE*0.5+i*60+Math.sin(x*0.02+i)*10);
-                cx.lineTo(CANVAS_SIZE,CANVAS_SIZE); cx.lineTo(0,CANVAS_SIZE); cx.closePath();
-                cx.fillStyle = `rgba(255,255,255,${0.1-i*0.015})`; cx.fill();
+            // Sky gradient
+            const sg = cx.createLinearGradient(0, 0, 0, CANVAS_SIZE * 0.55);
+            sg.addColorStop(0, '#1a0533');
+            sg.addColorStop(0.3, '#6b2c5a');
+            sg.addColorStop(0.6, '#e85d4a');
+            sg.addColorStop(1, '#ffb347');
+            cx.fillStyle = sg; cx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE * 0.55);
+            // Sun
+            cx.fillStyle = '#fff4e0';
+            cx.beginPath(); cx.arc(CANVAS_SIZE * 0.7, CANVAS_SIZE * 0.38, 50, 0, Math.PI * 2); cx.fill();
+            cx.fillStyle = 'rgba(255,200,100,0.3)';
+            cx.beginPath(); cx.arc(CANVAS_SIZE * 0.7, CANVAS_SIZE * 0.38, 70, 0, Math.PI * 2); cx.fill();
+            // Ocean
+            const og = cx.createLinearGradient(0, CANVAS_SIZE * 0.5, 0, CANVAS_SIZE * 0.7);
+            og.addColorStop(0, '#1a5276'); og.addColorStop(1, '#2e86c1');
+            cx.fillStyle = og; cx.fillRect(0, CANVAS_SIZE * 0.5, CANVAS_SIZE, CANVAS_SIZE * 0.2);
+            // Sun reflection on water
+            for (let i = 0; i < 12; i++) {
+                cx.fillStyle = `rgba(255,200,100,${0.15 - i * 0.01})`;
+                cx.fillRect(CANVAS_SIZE * 0.65 + i * 3, CANVAS_SIZE * 0.5 + i * 8, 30 - i * 2, 3);
             }
-            cx.fillStyle = '#FFF'; cx.beginPath(); cx.moveTo(500,50); cx.lineTo(520,80); cx.lineTo(480,80); cx.closePath(); cx.fill();
+            // Beach
+            const bg2 = cx.createLinearGradient(0, CANVAS_SIZE * 0.68, 0, CANVAS_SIZE);
+            bg2.addColorStop(0, '#f0d9a0'); bg2.addColorStop(0.3, '#e8c878'); bg2.addColorStop(1, '#c49a3c');
+            cx.fillStyle = bg2; cx.fillRect(0, CANVAS_SIZE * 0.68, CANVAS_SIZE, CANVAS_SIZE * 0.32);
+            // Palm tree
+            cx.fillStyle = '#8B4513';
+            cx.fillRect(80, CANVAS_SIZE * 0.3, 14, CANVAS_SIZE * 0.4);
+            for (let i = 0; i < 7; i++) {
+                const angle = Math.PI * 0.3 + Math.PI * 0.4 * (i / 6);
+                cx.save(); cx.translate(87, CANVAS_SIZE * 0.32);
+                cx.rotate(angle);
+                cx.fillStyle = i % 2 === 0 ? '#228B22' : '#006400';
+                cx.beginPath(); cx.ellipse(0, -40, 12, 50, 0, 0, Math.PI * 2); cx.fill();
+                cx.restore();
+            }
+            // Birds
+            drawBird(cx, 200, 80, 8);
+            drawBird(cx, 230, 60, 6);
+            drawBird(cx, 180, 50, 5);
             return c;
         }
 
-        function createCityNightImage() {
+        // === NEW: 秋日森林 ===
+        function createAutumnForestImage() {
             const c = document.createElement('canvas');
             c.width = CANVAS_SIZE; c.height = CANVAS_SIZE;
             const cx = c.getContext('2d');
-            const sg = cx.createLinearGradient(0,0,0,CANVAS_SIZE);
-            sg.addColorStop(0,'#0a0a1a'); sg.addColorStop(0.5,'#1a1a3a'); sg.addColorStop(1,'#2a2a4a');
-            cx.fillStyle = sg; cx.fillRect(0,0,CANVAS_SIZE,CANVAS_SIZE);
-            for (let i=0;i<100;i++) { cx.fillStyle=`rgba(255,255,255,${Math.random()*0.8})`; cx.beginPath(); cx.arc(Math.random()*CANVAS_SIZE,Math.random()*CANVAS_SIZE*0.6,Math.random()*2,0,Math.PI*2); cx.fill(); }
-            const buildings = [
-                {x:50,w:80,h:300,c:'#2C3E50'},{x:150,w:100,h:400,c:'#34495E'},{x:270,w:60,h:250,c:'#2C3E50'},
-                {x:350,w:120,h:450,c:'#1A252F'},{x:490,w:80,h:350,c:'#34495E'}
-            ];
-            buildings.forEach(b => {
-                cx.fillStyle = b.c; cx.fillRect(b.x,CANVAS_SIZE-b.h,b.w,b.h);
-                for (let f=0;f<b.h;f+=40) for (let wi=0;wi<b.w;wi+=25) if (Math.random()>0.3) { cx.fillStyle=Math.random()>0.5?'#FFD700':'#FF6B6B'; cx.fillRect(b.x+wi+5,CANVAS_SIZE-b.h+f+10,15,20); }
-            });
+            // Sky
+            const sg = cx.createLinearGradient(0, 0, 0, CANVAS_SIZE * 0.4);
+            sg.addColorStop(0, '#87CEEB'); sg.addColorStop(1, '#ffe8d6');
+            cx.fillStyle = sg; cx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+            // Sun
+            cx.fillStyle = 'rgba(255,220,150,0.4)';
+            cx.beginPath(); cx.arc(CANVAS_SIZE * 0.8, CANVAS_SIZE * 0.2, 60, 0, Math.PI * 2); cx.fill();
+            // Ground
+            const gg = cx.createLinearGradient(0, CANVAS_SIZE * 0.5, 0, CANVAS_SIZE);
+            gg.addColorStop(0, '#8B6914'); gg.addColorStop(1, '#654321');
+            cx.fillStyle = gg; cx.fillRect(0, CANVAS_SIZE * 0.5, CANVAS_SIZE, CANVAS_SIZE * 0.5);
+            // Fallen leaves on ground
+            for (let i = 0; i < 80; i++) {
+                const lx = Math.random() * CANVAS_SIZE, ly = CANVAS_SIZE * 0.5 + Math.random() * CANVAS_SIZE * 0.5;
+                cx.fillStyle = ['#c84b31', '#e8a838', '#b85d19', '#d4773d'][Math.floor(Math.random() * 4)];
+                cx.beginPath(); cx.ellipse(lx, ly, 6, 3, Math.random() * Math.PI, 0, Math.PI * 2); cx.fill();
+            }
+            // Trees
+            const autumnColors = ['#c84b31', '#e8a838', '#d4773d', '#b85d19', '#8B0000', '#cd5c5c'];
+            for (let i = 0; i < 9; i++) {
+                const tx = 50 + i * 65 + Math.random() * 20;
+                const th = 200 + Math.random() * 150;
+                drawTree(cx, tx, CANVAS_SIZE * 0.45 + th * 0.2, th, autumnColors[Math.floor(Math.random() * autumnColors.length)]);
+            }
+            // Path
+            cx.fillStyle = 'rgba(139,90,43,0.3)';
+            cx.beginPath(); cx.moveTo(CANVAS_SIZE * 0.45, CANVAS_SIZE); cx.lineTo(CANVAS_SIZE * 0.4, CANVAS_SIZE * 0.6);
+            cx.lineTo(CANVAS_SIZE * 0.55, CANVAS_SIZE * 0.6); cx.lineTo(CANVAS_SIZE * 0.6, CANVAS_SIZE); cx.closePath(); cx.fill();
             return c;
         }
 
+        // === NEW: 富士山 ===
+        function createMountFujiImage() {
+            const c = document.createElement('canvas');
+            c.width = CANVAS_SIZE; c.height = CANVAS_SIZE;
+            const cx = c.getContext('2d');
+            // Sky
+            const sg = cx.createLinearGradient(0, 0, 0, CANVAS_SIZE * 0.5);
+            sg.addColorStop(0, '#4a90d9'); sg.addColorStop(0.5, '#b3d9ff'); sg.addColorStop(1, '#ffe4c4');
+            cx.fillStyle = sg; cx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+            // Distant mountains
+            cx.fillStyle = '#b0c4de';
+            cx.beginPath(); cx.moveTo(0, CANVAS_SIZE * 0.55); cx.quadraticCurveTo(150, CANVAS_SIZE * 0.35, 250, CANVAS_SIZE * 0.5); cx.lineTo(0, CANVAS_SIZE * 0.5); cx.fill();
+            // Mt Fuji
+            cx.fillStyle = '#e8e8f0';
+            cx.beginPath(); cx.moveTo(CANVAS_SIZE * 0.2, CANVAS_SIZE * 0.62);
+            cx.lineTo(CANVAS_SIZE * 0.5, CANVAS_SIZE * 0.15); cx.lineTo(CANVAS_SIZE * 0.8, CANVAS_SIZE * 0.62);
+            cx.closePath(); cx.fill();
+            cx.fillStyle = '#ffffff';
+            cx.beginPath(); cx.moveTo(CANVAS_SIZE * 0.42, CANVAS_SIZE * 0.62);
+            cx.lineTo(CANVAS_SIZE * 0.5, CANVAS_SIZE * 0.22); cx.lineTo(CANVAS_SIZE * 0.35, CANVAS_SIZE * 0.62);
+            cx.closePath(); cx.fill();
+            // Snow cap
+            cx.fillStyle = '#ffffff';
+            cx.beginPath(); cx.moveTo(CANVAS_SIZE * 0.38, CANVAS_SIZE * 0.4);
+            cx.lineTo(CANVAS_SIZE * 0.5, CANVAS_SIZE * 0.15); cx.lineTo(CANVAS_SIZE * 0.62, CANVAS_SIZE * 0.4);
+            cx.quadraticCurveTo(CANVAS_SIZE * 0.5, CANVAS_SIZE * 0.35, CANVAS_SIZE * 0.38, CANVAS_SIZE * 0.4);
+            cx.fill();
+            // Lake
+            cx.fillStyle = '#5b9bd5';
+            cx.beginPath(); cx.ellipse(CANVAS_SIZE * 0.25, CANVAS_SIZE * 0.78, 120, 30, 0, 0, Math.PI * 2); cx.fill();
+            cx.fillStyle = 'rgba(255,255,255,0.3)';
+            cx.beginPath(); cx.ellipse(CANVAS_SIZE * 0.25, CANVAS_SIZE * 0.77, 80, 15, 0, 0, Math.PI * 2); cx.fill();
+            // Land
+            cx.fillStyle = '#7cbd5a'; cx.fillRect(0, CANVAS_SIZE * 0.6, CANVAS_SIZE, CANVAS_SIZE * 0.4);
+            // Cherry trees
+            for (let i = 0; i < 5; i++) {
+                const tx = 30 + i * 130;
+                cx.fillStyle = '#8B4513'; cx.fillRect(tx - 3, CANVAS_SIZE * 0.52, 6, 40);
+                cx.fillStyle = 'rgba(255,182,193,0.9)';
+                cx.beginPath(); cx.arc(tx, CANVAS_SIZE * 0.48, 35, 0, Math.PI * 2); cx.fill();
+                cx.fillStyle = 'rgba(255,192,203,0.7)';
+                cx.beginPath(); cx.arc(tx - 10, CANVAS_SIZE * 0.44, 25, 0, Math.PI * 2); cx.fill();
+                cx.beginPath(); cx.arc(tx + 10, CANVAS_SIZE * 0.44, 22, 0, Math.PI * 2); cx.fill();
+            }
+            return c;
+        }
+
+        // === NEW: 沙漠 ===
+        function createDesertImage() {
+            const c = document.createElement('canvas');
+            c.width = CANVAS_SIZE; c.height = CANVAS_SIZE;
+            const cx = c.getContext('2d');
+            // Sky
+            const sg = cx.createLinearGradient(0, 0, 0, CANVAS_SIZE * 0.45);
+            sg.addColorStop(0, '#1a0a00'); sg.addColorStop(0.4, '#5c2a11'); sg.addColorStop(0.8, '#d4752b'); sg.addColorStop(1, '#f0c060');
+            cx.fillStyle = sg; cx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE * 0.45);
+            // Sun
+            cx.fillStyle = '#ffe8c0';
+            cx.beginPath(); cx.arc(CANVAS_SIZE * 0.5, CANVAS_SIZE * 0.3, 45, 0, Math.PI * 2); cx.fill();
+            cx.fillStyle = 'rgba(255,200,100,0.2)';
+            cx.beginPath(); cx.arc(CANVAS_SIZE * 0.5, CANVAS_SIZE * 0.3, 65, 0, Math.PI * 2); cx.fill();
+            // Dunes
+            const duneColors = ['#e8b960', '#d4a040', '#c49030', '#e0c070', '#d4a848'];
+            for (let d = 0; d < 5; d++) {
+                cx.fillStyle = duneColors[d];
+                cx.beginPath();
+                cx.moveTo(0, CANVAS_SIZE * (0.4 + d * 0.12));
+                cx.quadraticCurveTo(CANVAS_SIZE * 0.3, CANVAS_SIZE * (0.3 + d * 0.1), CANVAS_SIZE * 0.5, CANVAS_SIZE * (0.4 + d * 0.12));
+                cx.quadraticCurveTo(CANVAS_SIZE * 0.7, CANVAS_SIZE * (0.35 + d * 0.1), CANVAS_SIZE, CANVAS_SIZE * (0.38 + d * 0.12));
+                cx.lineTo(CANVAS_SIZE, CANVAS_SIZE); cx.lineTo(0, CANVAS_SIZE); cx.closePath();
+                cx.fill();
+            }
+            // Camel silhouette
+            cx.fillStyle = '#3d1c02';
+            cx.beginPath();
+            cx.ellipse(CANVAS_SIZE * 0.35, CANVAS_SIZE * 0.55, 30, 18, 0, 0, Math.PI * 2); cx.fill(); // body
+            cx.fillRect(CANVAS_SIZE * 0.31, CANVAS_SIZE * 0.48, 8, 30); // front leg
+            cx.fillRect(CANVAS_SIZE * 0.37, CANVAS_SIZE * 0.48, 8, 30); // back leg
+            cx.beginPath(); cx.ellipse(CANVAS_SIZE * 0.38, CANVAS_SIZE * 0.5, 12, 8, 0, 0, Math.PI * 2); cx.fill(); // hump
+            cx.beginPath(); cx.ellipse(CANVAS_SIZE * 0.3, CANVAS_SIZE * 0.52, 10, 7, 0, Math.PI * 0.2, Math.PI * 1.8); cx.fill(); // neck/head
+            return c;
+        }
+
+        // === NEW: 极光 ===
+        function createAuroraImage() {
+            const c = document.createElement('canvas');
+            c.width = CANVAS_SIZE; c.height = CANVAS_SIZE;
+            const cx = c.getContext('2d');
+            // Dark night sky
+            const sg = cx.createLinearGradient(0, 0, 0, CANVAS_SIZE);
+            sg.addColorStop(0, '#020111'); sg.addColorStop(0.6, '#0a1a2e'); sg.addColorStop(1, '#1a2a3e');
+            cx.fillStyle = sg; cx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+            // Stars
+            for (let i = 0; i < 200; i++) {
+                cx.fillStyle = `rgba(255,255,255,${Math.random() * 0.9 + 0.1})`;
+                const sr = Math.random() * 2 + 0.5;
+                cx.beginPath(); cx.arc(Math.random() * CANVAS_SIZE, Math.random() * CANVAS_SIZE * 0.5, sr, 0, Math.PI * 2); cx.fill();
+            }
+            // Aurora bands
+            for (let band = 0; band < 3; band++) {
+                const by = CANVAS_SIZE * (0.15 + band * 0.12);
+                for (let x = 0; x < CANVAS_SIZE; x += 4) {
+                    const hue = 120 + band * 60 + Math.sin(x * 0.015 + band) * 40;
+                    const alpha = 0.15 + Math.sin(x * 0.02 + band * 2) * 0.1 + Math.cos(x * 0.01) * 0.05;
+                    const dy = Math.sin(x * 0.02 + band * 1.5) * 40 + Math.cos(x * 0.015) * 25;
+                    cx.fillStyle = `hsla(${hue}, 80%, 60%, ${Math.max(0.05, alpha)})`;
+                    cx.fillRect(x, by + dy, 6, 30 + Math.random() * 50);
+                }
+            }
+            // Snow mountains silhouette
+            cx.fillStyle = '#0d1b2a';
+            cx.beginPath(); cx.moveTo(0, CANVAS_SIZE * 0.55);
+            cx.lineTo(80, CANVAS_SIZE * 0.4); cx.lineTo(150, CANVAS_SIZE * 0.5);
+            cx.lineTo(250, CANVAS_SIZE * 0.35); cx.lineTo(350, CANVAS_SIZE * 0.48);
+            cx.lineTo(430, CANVAS_SIZE * 0.3); cx.lineTo(520, CANVAS_SIZE * 0.45);
+            cx.lineTo(600, CANVAS_SIZE * 0.38); cx.lineTo(600, CANVAS_SIZE);
+            cx.lineTo(0, CANVAS_SIZE); cx.closePath(); cx.fill();
+            // Snow on ground
+            cx.fillStyle = '#1a2a3e';
+            cx.fillRect(0, CANVAS_SIZE * 0.7, CANVAS_SIZE, CANVAS_SIZE * 0.3);
+            cx.fillStyle = 'rgba(255,255,255,0.05)';
+            cx.fillRect(0, CANVAS_SIZE * 0.7, CANVAS_SIZE, 3);
+            return c;
+        }
+
+        // === NEW: 樱花 ===
+        function createCherryBlossomImage() {
+            const c = document.createElement('canvas');
+            c.width = CANVAS_SIZE; c.height = CANVAS_SIZE;
+            const cx = c.getContext('2d');
+            // Sky
+            const sg = cx.createLinearGradient(0, 0, 0, CANVAS_SIZE);
+            sg.addColorStop(0, '#a8d8ea'); sg.addColorStop(0.5, '#d4f1f9'); sg.addColorStop(1, '#e8f8e8');
+            cx.fillStyle = sg; cx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+            // Grass
+            cx.fillStyle = '#7bc67e';
+            cx.fillRect(0, CANVAS_SIZE * 0.7, CANVAS_SIZE, CANVAS_SIZE * 0.3);
+            cx.fillStyle = '#8fd492'; cx.fillRect(0, CANVAS_SIZE * 0.7, CANVAS_SIZE, 15);
+            // Path
+            cx.fillStyle = '#d4c4a8';
+            cx.beginPath(); cx.moveTo(CANVAS_SIZE * 0.35, CANVAS_SIZE); cx.quadraticCurveTo(CANVAS_SIZE * 0.4, CANVAS_SIZE * 0.8, CANVAS_SIZE * 0.5, CANVAS_SIZE * 0.75);
+            cx.quadraticCurveTo(CANVAS_SIZE * 0.6, CANVAS_SIZE * 0.8, CANVAS_SIZE * 0.65, CANVAS_SIZE);
+            cx.closePath(); cx.fill();
+            // Large cherry tree
+            cx.fillStyle = '#5c3a1e'; cx.fillRect(CANVAS_SIZE * 0.47, CANVAS_SIZE * 0.35, 16, CANVAS_SIZE * 0.4);
+            // Branches
+            cx.strokeStyle = '#5c3a1e'; cx.lineWidth = 4;
+            cx.beginPath(); cx.moveTo(CANVAS_SIZE * 0.48, CANVAS_SIZE * 0.4); cx.quadraticCurveTo(CANVAS_SIZE * 0.35, CANVAS_SIZE * 0.3, CANVAS_SIZE * 0.25, CANVAS_SIZE * 0.25); cx.stroke();
+            cx.beginPath(); cx.moveTo(CANVAS_SIZE * 0.48, CANVAS_SIZE * 0.45); cx.quadraticCurveTo(CANVAS_SIZE * 0.65, CANVAS_SIZE * 0.3, CANVAS_SIZE * 0.75, CANVAS_SIZE * 0.22); cx.stroke();
+            cx.beginPath(); cx.moveTo(CANVAS_SIZE * 0.48, CANVAS_SIZE * 0.42); cx.quadraticCurveTo(CANVAS_SIZE * 0.55, CANVAS_SIZE * 0.25, CANVAS_SIZE * 0.5, CANVAS_SIZE * 0.18); cx.stroke();
+            // Blossom clusters
+            function drawBlossomCluster(bx, by, size) {
+                const colors = ['#ffb7c5', '#ffc0cb', '#f8a5c2', '#ffd1dc', '#fff0f5'];
+                for (let i = 0; i < 15; i++) {
+                    cx.fillStyle = colors[Math.floor(Math.random() * colors.length)];
+                    const px = bx + (Math.random() - 0.5) * size * 2;
+                    const py = by + (Math.random() - 0.5) * size * 2;
+                    cx.beginPath(); cx.arc(px, py, size * 0.3, 0, Math.PI * 2); cx.fill();
+                }
+            }
+            drawBlossomCluster(cx, CANVAS_SIZE * 0.25, CANVAS_SIZE * 0.25, 50);
+            drawBlossomCluster(cx, CANVAS_SIZE * 0.5, CANVAS_SIZE * 0.18, 55);
+            drawBlossomCluster(cx, CANVAS_SIZE * 0.7, CANVAS_SIZE * 0.22, 45);
+            drawBlossomCluster(cx, CANVAS_SIZE * 0.35, CANVAS_SIZE * 0.2, 40);
+            drawBlossomCluster(cx, CANVAS_SIZE * 0.55, CANVAS_SIZE * 0.28, 40);
+            // Falling petals
+            for (let i = 0; i < 30; i++) {
+                cx.fillStyle = ['#ffb7c5', '#ffc0cb', '#fff0f5'][Math.floor(Math.random() * 3)];
+                cx.beginPath();
+                cx.ellipse(Math.random() * CANVAS_SIZE, Math.random() * CANVAS_SIZE, 4, 2, Math.random() * Math.PI, 0, Math.PI * 2);
+                cx.fill();
+            }
+            return c;
+        }
+
+        // === NEW: 向日葵花田 ===
+        function createSunflowerFieldImage() {
+            const c = document.createElement('canvas');
+            c.width = CANVAS_SIZE; c.height = CANVAS_SIZE;
+            const cx = c.getContext('2d');
+            // Sky
+            const sg = cx.createLinearGradient(0, 0, 0, CANVAS_SIZE * 0.45);
+            sg.addColorStop(0, '#2196F3'); sg.addColorStop(1, '#87CEEB');
+            cx.fillStyle = sg; cx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE * 0.45);
+            // Clouds
+            drawCloud(cx, 100, 60, 80);
+            drawCloud(cx, 400, 90, 100);
+            drawCloud(cx, 520, 50, 70);
+            // Field
+            const fg = cx.createLinearGradient(0, CANVAS_SIZE * 0.45, 0, CANVAS_SIZE);
+            fg.addColorStop(0, '#4CAF50'); fg.addColorStop(0.5, '#388E3C'); fg.addColorStop(1, '#2E7D32');
+            cx.fillStyle = fg; cx.fillRect(0, CANVAS_SIZE * 0.45, CANVAS_SIZE, CANVAS_SIZE * 0.55);
+            // Sunflowers
+            function drawSunflower(sx, sy, scale) {
+                // Stem
+                cx.fillStyle = '#558B2F';
+                cx.fillRect(sx - 3, sy, 6, 80 * scale);
+                // Leaves
+                cx.fillStyle = '#33691E';
+                cx.beginPath(); cx.ellipse(sx - 15, sy + 30, 20, 8, -0.3, 0, Math.PI * 2); cx.fill();
+                cx.beginPath(); cx.ellipse(sx + 15, sy + 45, 20, 8, 0.3, 0, Math.PI * 2); cx.fill();
+                // Petals
+                for (let i = 0; i < 14; i++) {
+                    const angle = Math.PI * 2 / 14 * i;
+                    const px = sx + Math.cos(angle) * 18 * scale;
+                    const py = sy + Math.sin(angle) * 18 * scale;
+                    cx.fillStyle = '#FFD700';
+                    cx.beginPath(); cx.ellipse(px, py, 10 * scale, 6 * scale, angle, 0, Math.PI * 2); cx.fill();
+                }
+                for (let i = 0; i < 14; i++) {
+                    const angle = Math.PI * 2 / 14 * i + Math.PI / 14;
+                    const px = sx + Math.cos(angle) * 10 * scale;
+                    const py = sy + Math.sin(angle) * 10 * scale;
+                    cx.fillStyle = '#FFA000';
+                    cx.beginPath(); cx.ellipse(px, py, 8 * scale, 5 * scale, angle, 0, Math.PI * 2); cx.fill();
+                }
+                // Center
+                cx.fillStyle = '#5D4037';
+                cx.beginPath(); cx.arc(sx, sy, 14 * scale, 0, Math.PI * 2); cx.fill();
+                cx.fillStyle = '#3E2723';
+                cx.beginPath(); cx.arc(sx, sy, 10 * scale, 0, Math.PI * 2); cx.fill();
+            }
+            const positions = [
+                [80, 280, 1.3], [230, 260, 1.5], [380, 270, 1.4],
+                [140, 320, 1.2], [300, 300, 1.35], [460, 310, 1.25],
+                [50, 350, 1.1], [200, 370, 1.3], [340, 350, 1.2], [500, 360, 1.15],
+                [120, 420, 1.0], [270, 400, 1.15], [430, 410, 1.1],
+            ];
+            positions.forEach(([x, y, s]) => drawSunflower(x, y, s));
+            return c;
+        }
+
+        // === NEW: 高山湖泊 ===
+        function createMountainLakeImage() {
+            const c = document.createElement('canvas');
+            c.width = CANVAS_SIZE; c.height = CANVAS_SIZE;
+            const cx = c.getContext('2d');
+            // Sky
+            const sg = cx.createLinearGradient(0, 0, 0, CANVAS_SIZE * 0.5);
+            sg.addColorStop(0, '#1a237e'); sg.addColorStop(0.4, '#42a5f5'); sg.addColorStop(1, '#90caf9');
+            cx.fillStyle = sg; cx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE * 0.5);
+            // Stars in upper sky
+            for (let i = 0; i < 30; i++) {
+                cx.fillStyle = `rgba(255,255,255,${Math.random() * 0.5 + 0.2})`;
+                cx.beginPath(); cx.arc(Math.random() * CANVAS_SIZE, Math.random() * CANVAS_SIZE * 0.15, 1.5, 0, Math.PI * 2); cx.fill();
+            }
+            // Mountains
+            function drawMountain(peakX, peakY, leftX, rightX, baseY, color) {
+                cx.fillStyle = color;
+                cx.beginPath(); cx.moveTo(leftX, baseY);
+                cx.lineTo(peakX, peakY); cx.lineTo(rightX, baseY); cx.closePath(); cx.fill();
+            }
+            drawMountain(80, CANVAS_SIZE * 0.08, -50, 200, CANVAS_SIZE * 0.5, '#1b2838');
+            drawMountain(200, CANVAS_SIZE * 0.05, 100, 320, CANVAS_SIZE * 0.5, '#1a2740');
+            drawMountain(300, CANVAS_SIZE * 0.03, 220, 400, CANVAS_SIZE * 0.5, '#263545');
+            drawMountain(500, CANVAS_SIZE * 0.06, 380, 650, CANVAS_SIZE * 0.5, '#1b2838');
+            // Snow caps
+            cx.fillStyle = '#ffffff';
+            cx.beginPath(); cx.moveTo(185, CANVAS_SIZE * 0.2); cx.lineTo(200, CANVAS_SIZE * 0.05);
+            cx.lineTo(215, CANVAS_SIZE * 0.2); cx.quadraticCurveTo(200, CANVAS_SIZE * 0.17, 185, CANVAS_SIZE * 0.2); cx.fill();
+            cx.beginPath(); cx.moveTo(285, CANVAS_SIZE * 0.18); cx.lineTo(300, CANVAS_SIZE * 0.03);
+            cx.lineTo(315, CANVAS_SIZE * 0.18); cx.quadraticCurveTo(300, CANVAS_SIZE * 0.15, 285, CANVAS_SIZE * 0.18); cx.fill();
+            // Lake
+            const lg = cx.createLinearGradient(0, CANVAS_SIZE * 0.5, 0, CANVAS_SIZE);
+            lg.addColorStop(0, '#1e3a5f'); lg.addColorStop(0.5, '#2c5282'); lg.addColorStop(1, '#1a365d');
+            cx.fillStyle = lg; cx.fillRect(0, CANVAS_SIZE * 0.5, CANVAS_SIZE, CANVAS_SIZE * 0.5);
+            // Mountain reflections
+            cx.globalAlpha = 0.3;
+            drawMountain(200, CANVAS_SIZE * 0.95, 100, 320, CANVAS_SIZE * 0.5, '#1a2740');
+            drawMountain(300, CANVAS_SIZE * 0.97, 220, 400, CANVAS_SIZE * 0.5, '#263545');
+            cx.globalAlpha = 1;
+            // Shore line
+            cx.fillStyle = '#4a7c59';
+            cx.beginPath(); cx.moveTo(0, CANVAS_SIZE * 0.48); cx.quadraticCurveTo(150, CANVAS_SIZE * 0.47, 300, CANVAS_SIZE * 0.5);
+            cx.quadraticCurveTo(450, CANVAS_SIZE * 0.53, 600, CANVAS_SIZE * 0.49); cx.lineTo(600, CANVAS_SIZE * 0.52);
+            cx.quadraticCurveTo(450, CANVAS_SIZE * 0.56, 300, CANVAS_SIZE * 0.53);
+            cx.quadraticCurveTo(150, CANVAS_SIZE * 0.5, 0, CANVAS_SIZE * 0.51); cx.closePath(); cx.fill();
+            // Trees on shore
+            for (let i = 0; i < 7; i++) {
+                drawTree(cx, 40 + i * 90, CANVAS_SIZE * 0.52 + Math.random() * 10, 60 + Math.random() * 30, ['#2d5016', '#1b4010', '#3a5f1e'][i % 3]);
+            }
+            return c;
+        }
+
+        // === LOCAL IMAGE LOADER (non-blocking) ===
+        const LOCAL_IMAGE_PATHS = [
+            '图片/bdcdd9ac-e756-46e7-92d1-013206b2fe56.png',
+            '图片/a4f082c7-59d9-4aab-86ec-b4e27b06cd85.png',
+            '图片/f4ce2966-5b16-467a-a6dd-c60eb7a57a13.png',
+            '图片/7e9d3e55-159c-4d5b-a812-cc9bed72246c.png',
+        ];
+        const loadedLocalImages = [];
+
+        function preloadLocalImages() {
+            LOCAL_IMAGE_PATHS.forEach((path, idx) => {
+                const img = new Image();
+                img.onload = function () {
+                    const c = document.createElement('canvas');
+                    c.width = CANVAS_SIZE; c.height = CANVAS_SIZE;
+                    const cx = c.getContext('2d');
+                    cx.drawImage(img, 0, 0, CANVAS_SIZE, CANVAS_SIZE);
+                    loadedLocalImages[idx] = c;
+                    refreshSingleThumbnail(idx);
+                };
+                img.onerror = function () {
+                    const c = document.createElement('canvas');
+                    c.width = CANVAS_SIZE; c.height = CANVAS_SIZE;
+                    const cx = c.getContext('2d');
+                    cx.fillStyle = '#2a2a4a';
+                    cx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+                    cx.fillStyle = 'rgba(255,255,255,0.4)';
+                    cx.font = '18px sans-serif'; cx.textAlign = 'center';
+                    cx.fillText('图片未找到', CANVAS_SIZE / 2, CANVAS_SIZE / 2 - 10);
+                    cx.fillText(path.replace('图片/', ''), CANVAS_SIZE / 2, CANVAS_SIZE / 2 + 20);
+                    loadedLocalImages[idx] = c;
+                    refreshSingleThumbnail(idx);
+                };
+                img.src = path;
+            });
+        }
+
+        function refreshSingleThumbnail(idx) {
+            const thumbs = document.querySelectorAll('#imageSelector .image-thumb');
+            if (thumbs[idx] && loadedLocalImages[idx]) {
+                thumbs[idx].src = loadedLocalImages[idx].toDataURL();
+                // If this image is currently active, update the board too
+                if (state.currentImageIndex === idx) {
+                    state.currentImage = loadedLocalImages[idx];
+                    renderBoard();
+                }
+            }
+        }
+
+        // ============================================================
+        // SECTION 4d: PRESET IMAGES REGISTRY
+        // ============================================================
         const presetImages = [
-            { name:'渐变方块', generator:createGradientBlocksImage },
-            { name:'星空', generator:createStarfieldImage },
-            { name:'彩虹', generator:createRainbowImage },
-            { name:'几何图案', generator:createGeometricPatternImage },
-            { name:'花朵', generator:createFlowerImage },
-            { name:'山脉', generator:createMountainsImage },
-            { name:'海洋', generator:createOceanImage },
-            { name:'城市夜景', generator:createCityNightImage },
+            // Local photos from "图片" folder (loaded at startup)
+            { name: '本地图片 1 🖼️', generator: () => loadedLocalImages[0], category: '本地图片', isLocal: true, localIdx: 0 },
+            { name: '本地图片 2 🖼️', generator: () => loadedLocalImages[1], category: '本地图片', isLocal: true, localIdx: 1 },
+            { name: '本地图片 3 🖼️', generator: () => loadedLocalImages[2], category: '本地图片', isLocal: true, localIdx: 2 },
+            { name: '本地图片 4 🖼️', generator: () => loadedLocalImages[3], category: '本地图片', isLocal: true, localIdx: 3 },
+            // Generated scenery
+            { name: '日落海滩 🏖️', generator: createSunsetBeachImage, category: '风景' },
+            { name: '秋日森林 🍂', generator: createAutumnForestImage, category: '风景' },
+            { name: '富士山 🗻', generator: createMountFujiImage, category: '风景' },
+            { name: '沙漠 🏜️', generator: createDesertImage, category: '风景' },
+            { name: '极光 🌌', generator: createAuroraImage, category: '风景' },
+            { name: '樱花 🌸', generator: createCherryBlossomImage, category: '风景' },
+            { name: '向日葵花田 🌻', generator: createSunflowerFieldImage, category: '风景' },
+            { name: '高山湖泊 🏔️', generator: createMountainLakeImage, category: '风景' },
+            { name: '星空 ✨', generator: createStarfieldImage, category: '风景' },
+            { name: '彩虹 🌈', generator: createRainbowImage, category: '风景' },
+            { name: '几何图案 🔷', generator: createGeometricPatternImage, category: '抽象' },
+            { name: '渐变方块 🟦', generator: createGradientBlocksImage, category: '抽象' },
         ];
 
-        // ---- Drawing helpers ----
-        function drawStar(ctx, cx, cy, spikes, outerR, innerR, color) {
-            let rot = -Math.PI/2, step = Math.PI/spikes;
-            ctx.beginPath();
-            for (let i=0;i<spikes;i++) {
-                ctx.lineTo(cx+Math.cos(rot)*outerR, cy+Math.sin(rot)*outerR); rot+=step;
-                ctx.lineTo(cx+Math.cos(rot)*innerR, cy+Math.sin(rot)*innerR); rot+=step;
-            }
-            ctx.closePath(); ctx.fillStyle = color; ctx.fill();
-        }
-
-        function drawHexagon(ctx, cx, cy, r) {
-            ctx.beginPath();
-            for (let i=0;i<6;i++) { const a=Math.PI/3*i-Math.PI/6; i===0?ctx.moveTo(cx+r*Math.cos(a),cy+r*Math.sin(a)):ctx.lineTo(cx+r*Math.cos(a),cy+r*Math.sin(a)); }
-            ctx.closePath(); ctx.fill();
-        }
-
-        function drawFlower(ctx, cx, cy, petal, center) {
-            ctx.fillStyle = petal;
-            for (let i=0;i<8;i++) { ctx.save(); ctx.translate(cx,cy); ctx.rotate(Math.PI/4*i); ctx.beginPath(); ctx.ellipse(0,-30,25,40,0,0,Math.PI*2); ctx.fill(); ctx.restore(); }
-            ctx.fillStyle = center; ctx.beginPath(); ctx.arc(cx,cy,25,0,Math.PI*2); ctx.fill();
-        }
-
-        function adjustColor(color, amount) {
-            const h = color.replace('#','');
-            return `#${[0,2,4].map(i=>Math.max(0,Math.min(255,parseInt(h.substr(i,2),16)+amount)).toString(16).padStart(2,'0')).join('')}`;
-        }
-
         // ============================================================
-        // SECTION 5: PUZZLE LOGIC
+        // SECTION 5: PUZZLE LOGIC (SWAP MODE)
         // ============================================================
         function initializePuzzle() {
-            const total = state.gridSize * state.gridSize - 1;
+            const total = state.gridSize * state.gridSize;
             state.tiles = [];
             for (let i = 0; i < total; i++) {
                 state.tiles.push({
@@ -805,27 +1183,32 @@
                     currentCol: i % state.gridSize,
                 });
             }
-            state.blankRow = state.gridSize - 1;
-            state.blankCol = state.gridSize - 1;
+            state.selectedRow = null;
+            state.selectedCol = null;
         }
 
         function shufflePuzzle() {
             initializePuzzle();
             const numMoves = state.gridSize * state.gridSize * SHUFFLE_FACTOR;
             for (let i = 0; i < numMoves; i++) {
-                const moves = [];
-                if (state.blankRow > 0) moves.push({dr:-1,dc:0});
-                if (state.blankRow < state.gridSize - 1) moves.push({dr:1,dc:0});
-                if (state.blankCol > 0) moves.push({dr:0,dc:-1});
-                if (state.blankCol < state.gridSize - 1) moves.push({dr:0,dc:1});
-                const m = moves[Math.floor(Math.random() * moves.length)];
-                const tr = state.blankRow + m.dr, tc = state.blankCol + m.dc;
-                const tile = getTileAt(tr, tc);
-                if (!tile) continue;
-                tile.currentRow = state.blankRow;
-                tile.currentCol = state.blankCol;
-                state.blankRow = tr;
-                state.blankCol = tc;
+                const idx = Math.floor(Math.random() * state.tiles.length);
+                const tile = state.tiles[idx];
+                const neighbors = [];
+                for (const t of state.tiles) {
+                    if (t.id !== tile.id && Math.abs(t.currentRow - tile.currentRow) + Math.abs(t.currentCol - tile.currentCol) === 1) {
+                        neighbors.push(t);
+                    }
+                }
+                if (neighbors.length === 0) continue;
+                const other = neighbors[Math.floor(Math.random() * neighbors.length)];
+                swapTileState(tile, other);
+            }
+            // Ensure the puzzle isn't already solved
+            if (isComplete()) {
+                // Swap one more pair
+                const a = state.tiles[0];
+                const neighbors = state.tiles.filter(t => Math.abs(t.currentRow - a.currentRow) + Math.abs(t.currentCol - a.currentCol) === 1);
+                if (neighbors.length > 0) swapTileState(a, neighbors[0]);
             }
         }
 
@@ -833,16 +1216,16 @@
             return state.tiles.find(t => t.currentRow === row && t.currentCol === col);
         }
 
-        function isAdjacentToBlank(row, col) {
-            return Math.abs(row - state.blankRow) + Math.abs(col - state.blankCol) === 1;
+        function isAdjacent(r1, c1, r2, c2) {
+            return Math.abs(r1 - r2) + Math.abs(c1 - c2) === 1;
         }
 
-        function moveTile(tile) {
-            const tr = tile.currentRow, tc = tile.currentCol;
-            tile.currentRow = state.blankRow;
-            tile.currentCol = state.blankCol;
-            state.blankRow = tr;
-            state.blankCol = tc;
+        function swapTileState(a, b) {
+            const tr = a.currentRow, tc = a.currentCol;
+            a.currentRow = b.currentRow;
+            a.currentCol = b.currentCol;
+            b.currentRow = tr;
+            b.currentCol = tc;
         }
 
         function isComplete() {
@@ -854,60 +1237,25 @@
         // ============================================================
         function renderBoard() {
             const ps = CANVAS_SIZE / state.gridSize;
-            const gap = Math.max(2, ps * 0.04);
-            ctx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+            const gap = Math.max(1, ps * 0.03);
             ctx.fillStyle = '#1a1a2e';
             ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
-
-            state.tiles.forEach(t => renderTile(t, gap));
-
-            // Bevel effects
+            // Draw tiles — flat, no clips, direct drawImage
+            const img = state.currentImage;
             state.tiles.forEach(t => {
-                const x = t.currentCol * ps + gap, y = t.currentRow * ps + gap, w = ps - gap * 2;
-                ctx.strokeStyle = 'rgba(255,255,255,0.25)'; ctx.lineWidth = 1.5;
-                ctx.beginPath(); ctx.moveTo(x, y+w); ctx.lineTo(x, y); ctx.lineTo(x+w, y); ctx.stroke();
-                ctx.strokeStyle = 'rgba(0,0,0,0.4)';
-                ctx.beginPath(); ctx.moveTo(x+w, y); ctx.lineTo(x+w, y+w); ctx.lineTo(x, y+w); ctx.stroke();
+                const dx = t.currentCol * ps + gap, dy = t.currentRow * ps + gap, ds = ps - gap * 2;
+                ctx.drawImage(img, t.correctCol * ps, t.correctRow * ps, ps, ps, dx, dy, ds, ds);
             });
-
-            // Blank slot on top
-            renderBlankSlot(gap);
+            // Selection highlight
+            if (state.selectedRow !== null) {
+                const sx = state.selectedCol * ps, sy = state.selectedRow * ps;
+                ctx.strokeStyle = '#FFD700';
+                ctx.lineWidth = 3;
+                ctx.strokeRect(sx + 2, sy + 2, ps - 4, ps - 4);
+            }
         }
 
-        function renderTile(tile, gap) {
-            const ps = CANVAS_SIZE / state.gridSize;
-            const sx = tile.correctCol * ps, sy = tile.correctRow * ps;
-            const dx = tile.currentCol * ps + gap, dy = tile.currentRow * ps + gap;
-            const ds = ps - gap * 2, r = Math.max(3, ps * 0.06);
-            ctx.save();
-            roundRect(ctx, dx, dy, ds, ds, r); ctx.clip();
-            ctx.drawImage(state.currentImage, sx, sy, ps, ps, dx, dy, ps, ps);
-            ctx.restore();
-            ctx.strokeStyle = 'rgba(255,255,255,0.15)'; ctx.lineWidth = 0.5;
-            roundRect(ctx, dx, dy, ds, ds, r); ctx.stroke();
-        }
-
-        function renderBlankSlot(gap) {
-            const ps = CANVAS_SIZE / state.gridSize;
-            const x = state.blankCol * ps + gap, y = state.blankRow * ps + gap;
-            const s = ps - gap * 2, r = Math.max(3, ps * 0.06);
-            ctx.fillStyle = '#16213e';
-            ctx.beginPath(); roundRect(ctx, x, y, s, s, r); ctx.fill();
-            ctx.strokeStyle = 'rgba(255,255,255,0.12)'; ctx.lineWidth = 1.5; ctx.setLineDash([4,4]);
-            roundRect(ctx, x+4, y+4, s-8, s-8, r-2); ctx.stroke(); ctx.setLineDash([]);
-            // Three subtle dots
-            ctx.fillStyle = 'rgba(255,255,255,0.15)';
-            const cx = x + s/2, cy = y + s/2;
-            for (let i=0;i<3;i++) { const a=Math.PI*2/3*i-Math.PI/2; ctx.beginPath(); ctx.arc(cx+Math.cos(a)*10,cy+Math.sin(a)*10,3,0,Math.PI*2); ctx.fill(); }
-        }
-
-        function roundRect(ctx, x, y, w, h, r) {
-            ctx.beginPath();
-            ctx.moveTo(x+r, y); ctx.lineTo(x+w-r, y); ctx.arcTo(x+w, y, x+w, y+r, r);
-            ctx.lineTo(x+w, y+h-r); ctx.arcTo(x+w, y+h, x+w-r, y+h, r);
-            ctx.lineTo(x+r, y+h); ctx.arcTo(x, y+h, x, y+h-r, r);
-            ctx.lineTo(x, y+r); ctx.arcTo(x, y, x+r, y, r); ctx.closePath();
-        }
+        // (renderTile removed — inlined into renderBoard for speed)
 
         // ============================================================
         // SECTION 7: GAME CONTROLS
@@ -941,16 +1289,20 @@
 
         function startNewGame() {
             state.gameOver = false;
+            state.selectedRow = null;
+            state.selectedCol = null;
             if (!state.currentImage) {
-                state.currentImage = presetImages[0].generator();
-                state.currentImageIndex = 0;
+                // Default to first generated image (skip local images that may not be loaded yet)
+                const defaultIdx = LOCAL_IMAGE_COUNT; // first generated image
+                state.currentImage = presetImages[defaultIdx].generator();
+                state.currentImageIndex = defaultIdx;
             }
             state.moves = 0; state.gameStarted = false; state.showingHint = false;
             clearInterval(state.timerInterval); state.seconds = 0;
             updateTimer();
             document.getElementById('movesCount').textContent = state.moves;
             if (state.gameMode === 'timed') document.getElementById('limitCount').textContent = state.timeLimit;
-            else if (state.gameMode === 'limited') { state.moveLimit = state.gridSize*state.gridSize*3; document.getElementById('limitCount').textContent = state.moveLimit; }
+            else if (state.gameMode === 'limited') { state.moveLimit = state.gridSize * state.gridSize * 3; document.getElementById('limitCount').textContent = state.moveLimit; }
             shufflePuzzle();
             renderBoard();
             updateBestScores();
@@ -970,37 +1322,54 @@
 
         function updateTimer() {
             document.getElementById('timer').textContent =
-                `${Math.floor(state.seconds/60).toString().padStart(2,'0')}:${(state.seconds%60).toString().padStart(2,'0')}`;
+                `${Math.floor(state.seconds / 60).toString().padStart(2, '0')}:${(state.seconds % 60).toString().padStart(2, '0')}`;
         }
 
         // ============================================================
         // SECTION 8: USER INTERACTION
         // ============================================================
-        canvas.addEventListener('click', function(e) {
+        canvas.addEventListener('click', function (e) {
             if (state.gameOver) return;
             const ps = CANVAS_SIZE / state.gridSize;
             const rect = canvas.getBoundingClientRect();
             const col = Math.floor((e.clientX - rect.left) / ps);
             const row = Math.floor((e.clientY - rect.top) / ps);
             if (row < 0 || row >= state.gridSize || col < 0 || col >= state.gridSize) return;
-            if (row === state.blankRow && col === state.blankCol) return;
 
             if (!state.gameStarted) { state.gameStarted = true; startTimer(); }
 
-            const tile = getTileAt(row, col);
-            if (!tile || !isAdjacentToBlank(row, col)) return;
+            const clickedTile = getTileAt(row, col);
+            if (!clickedTile) return;
 
-            moveTile(tile);
-            state.moves++;
-            document.getElementById('movesCount').textContent = state.moves;
+            if (state.selectedRow === null && state.selectedCol === null) {
+                // First selection
+                state.selectedRow = row;
+                state.selectedCol = col;
+            } else if (state.selectedRow === row && state.selectedCol === col) {
+                // Deselect
+                state.selectedRow = null;
+                state.selectedCol = null;
+            } else if (isAdjacent(state.selectedRow, state.selectedCol, row, col)) {
+                // Swap!
+                const selectedTile = getTileAt(state.selectedRow, state.selectedCol);
+                swapTileState(selectedTile, clickedTile);
+                state.moves++;
+                document.getElementById('movesCount').textContent = state.moves;
+                state.selectedRow = null;
+                state.selectedCol = null;
 
-            if (state.gameMode === 'limited') {
-                state.moveLimit--;
-                document.getElementById('limitCount').textContent = state.moveLimit;
-                if (state.moveLimit <= 0) { showGameOver('步数用完了！'); return; }
+                if (state.gameMode === 'limited') {
+                    state.moveLimit--;
+                    document.getElementById('limitCount').textContent = state.moveLimit;
+                    if (state.moveLimit <= 0) { showGameOver('步数用完了！'); return; }
+                }
+
+                if (isComplete()) { clearInterval(state.timerInterval); checkAndSaveScore(); showSuccessMessage(); return; }
+            } else {
+                // Not adjacent — select the new tile instead
+                state.selectedRow = row;
+                state.selectedCol = col;
             }
-
-            if (isComplete()) { clearInterval(state.timerInterval); checkAndSaveScore(); showSuccessMessage(); return; }
             renderBoard();
         });
 
@@ -1011,13 +1380,15 @@
             ctx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
             ctx.fillStyle = '#1a1a2e'; ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
             ctx.drawImage(state.currentImage, 0, 0, CANVAS_SIZE, CANVAS_SIZE);
-            ctx.fillStyle = 'rgba(255,255,255,0.3)'; ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
-            for (let r=0; r<state.gridSize; r++) for (let c=0; c<state.gridSize; c++) {
-                if (r===state.blankRow&&c===state.blankCol) continue;
-                const tile = getTileAt(r,c);
-                if (tile && (tile.currentRow!==tile.correctRow||tile.currentCol!==tile.correctCol)) {
-                    ctx.fillStyle = 'rgba(255,0,0,0.2)'; ctx.fillRect(c*ps,r*ps,ps,ps);
-                    ctx.strokeStyle = 'rgba(255,0,0,0.8)'; ctx.lineWidth = 2; ctx.strokeRect(c*ps+1,r*ps+1,ps-2,ps-2);
+            ctx.fillStyle = 'rgba(255,255,255,0.25)'; ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+            // Highlight misplaced tiles
+            for (const tile of state.tiles) {
+                if (tile.currentRow !== tile.correctRow || tile.currentCol !== tile.correctCol) {
+                    const cx = tile.currentCol * ps, cy = tile.currentRow * ps;
+                    ctx.fillStyle = 'rgba(255,0,0,0.25)';
+                    ctx.fillRect(cx, cy, ps, ps);
+                    ctx.strokeStyle = 'rgba(255,0,0,0.7)'; ctx.lineWidth = 2;
+                    ctx.strokeRect(cx + 1, cy + 1, ps - 2, ps - 2);
                 }
             }
             setTimeout(() => { if (state.showingHint) { state.showingHint = false; renderBoard(); } }, 2000);
@@ -1040,10 +1411,10 @@
         }
 
         function closeModal() {
-            ['overlay','successMessage','gameOverMessage'].forEach(id => {
+            ['overlay', 'successMessage', 'gameOverMessage'].forEach(id => {
                 const el = document.getElementById(id);
                 el.classList.remove('show');
-                el.style.display = ''; // 清除内联样式，防止下次加.show类无效
+                el.style.display = '';
             });
         }
 
@@ -1053,7 +1424,7 @@
         // SECTION 10: SCORES
         // ============================================================
         function checkAndSaveScore() {
-            const key = `puzzle_best_${state.gridSize}x${state.gridSize}_${state.gameMode}`;
+            const key = `puzzleSwap_best_${state.gridSize}x${state.gridSize}_${state.gameMode}`;
             const saved = localStorage.getItem(key);
             const nr = document.getElementById('newRecord');
             if (!saved || state.moves < parseInt(saved)) {
@@ -1063,12 +1434,14 @@
         }
 
         function updateBestScores() {
-            const modes = {classic:'经典',timed:'限时',limited:'步数'};
-            let html = '<div class="best-scores-title">🏆 最佳成绩</div>';
-            [3,4,5,6].forEach(d => Object.keys(modes).forEach(m => {
-                const v = localStorage.getItem(`puzzle_best_${d}x${d}_${m}`);
-                if (v) html += `<p>${d}×${d} ${modes[m]}: ${v}步</p>`;
+            const modes = { classic: '经典', timed: '限时', limited: '步数' };
+            let html = '<div class="best-scores-title">🏆 最佳成绩 (交换模式)</div>';
+            let any = false;
+            [3, 4, 5, 6].forEach(d => Object.keys(modes).forEach(m => {
+                const v = localStorage.getItem(`puzzleSwap_best_${d}x${d}_${m}`);
+                if (v) { html += `<p>${d}×${d} ${modes[m]}: ${v}步</p>`; any = true; }
             }));
+            if (!any) html += '<p>还没有记录</p>';
             document.getElementById('bestScores').innerHTML = html;
         }
 
@@ -1079,22 +1452,44 @@
             const sel = document.getElementById('imageSelector'); sel.innerHTML = '';
             presetImages.forEach((img, idx) => {
                 const el = document.createElement('img');
-                el.src = img.generator().toDataURL();
+                // For local images, show a loading placeholder until preloaded
+                if (img.isLocal && !loadedLocalImages[idx]) {
+                    el.src = createLoadingThumbnail().toDataURL();
+                } else {
+                    el.src = img.generator().toDataURL();
+                }
                 el.className = `image-thumb ${idx === state.currentImageIndex ? 'active' : ''}`;
-                el.title = img.name;
+                el.title = `${img.name} [${img.category}]`;
                 el.onclick = () => selectPresetImage(idx);
                 sel.appendChild(el);
             });
             const cust = document.createElement('div');
-            cust.className = 'image-thumb'; cust.style.cssText = 'display:flex;align-items:center;justify-content:center;font-size:24px';
-            cust.textContent = '+'; cust.title = '上传自定义图片'; cust.onclick = loadImage;
+            cust.className = 'image-thumb add-btn';
+            cust.style.cssText = 'display:flex;align-items:center;justify-content:center;font-size:24px;';
+            cust.textContent = '+';
+            cust.title = '上传自定义图片';
+            cust.onclick = loadImage;
             sel.appendChild(cust);
         }
 
+        function createLoadingThumbnail() {
+            const c = document.createElement('canvas');
+            c.width = 52; c.height = 52;
+            const cx = c.getContext('2d');
+            cx.fillStyle = '#2a2a4a';
+            cx.fillRect(0, 0, 52, 52);
+            cx.fillStyle = 'rgba(255,255,255,0.3)';
+            cx.font = '20px sans-serif'; cx.textAlign = 'center'; cx.textBaseline = 'middle';
+            cx.fillText('⏳', 26, 26);
+            return c;
+        }
+
         function selectPresetImage(index) {
+            const canvas = presetImages[index].generator();
+            if (!canvas) return; // Image not loaded yet
             state.currentImageIndex = index;
-            state.currentImage = presetImages[index].generator();
-            document.querySelectorAll('.image-thumb').forEach((el,i) => el.classList.toggle('active', i === index));
+            state.currentImage = canvas;
+            document.querySelectorAll('.image-thumb').forEach((el, i) => el.classList.toggle('active', i === index));
             startNewGame();
         }
 
@@ -1104,9 +1499,9 @@
             const file = event.target.files[0];
             if (!file) return;
             const reader = new FileReader();
-            reader.onload = function(e) {
+            reader.onload = function (e) {
                 const img = new Image();
-                img.onload = function() {
+                img.onload = function () {
                     state.currentImage = img;
                     state.currentImageIndex = -1;
                     document.querySelectorAll('.image-thumb').forEach(el => el.classList.remove('active'));
@@ -1120,8 +1515,11 @@
         // ============================================================
         // SECTION 12: INIT
         // ============================================================
+        // Start game immediately with a generated image (local images load async)
         initImageSelector();
         startNewGame();
+        // Preload local images in background — thumbnails update as they arrive
+        preloadLocalImages();
     </script>
 </body>
 </html>
