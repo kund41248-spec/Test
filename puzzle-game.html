@@ -562,7 +562,7 @@
             moveLimit: 0,
         };
 
-        function get pieceSize() { return CANVAS_SIZE / state.gridSize; }
+        function pieceSize() { return CANVAS_SIZE / state.gridSize; }
 
         // ============================================================
         // SECTION 3: BACKGROUND PARTICLES
@@ -1040,14 +1040,11 @@
         }
 
         function closeModal() {
-            ['overlay','successMessage','gameOverMessage'].forEach(id => document.getElementById(id).classList.remove('show'));
-            setTimeout(() => {
-                if (!document.getElementById('overlay').classList.contains('show')) {
-                    document.getElementById('overlay').style.display = 'none';
-                    document.getElementById('successMessage').style.display = 'none';
-                    document.getElementById('gameOverMessage').style.display = 'none';
-                }
-            }, 300);
+            ['overlay','successMessage','gameOverMessage'].forEach(id => {
+                const el = document.getElementById(id);
+                el.classList.remove('show');
+                el.style.display = ''; // 清除内联样式，防止下次加.show类无效
+            });
         }
 
         function closeModalAndNewGame() { closeModal(); startNewGame(); }
