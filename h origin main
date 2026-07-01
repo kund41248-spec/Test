@@ -1,0 +1,31 @@
+[33mcommit e905e76ee4df4e9ad337415af6468a2ccb7cc9eb[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m
+Author: 001 Allen <123456@qq.com>
+Date:   Wed Jul 1 14:37:42 2026 +0800
+
+    交换拼图改成经典滑块拼图
+
+[33mcommit 7e5f9b269fbddbdfb71d6afcae317fc1ada32544[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Author: 001 Allen <123456@qq.com>
+Date:   Sun Jun 28 14:14:39 2026 +0800
+
+    测试
+
+[33mcommit ee867bfbced94f1fa1da4ad6a85ff02067749c2e[m
+Author: Allen <kund41248@gmail.com>
+Date:   Sun Jun 28 14:09:18 2026 +0800
+
+    Add project description in README
+
+[33mcommit 7771f07c4db4023b07ffeb8bc624244a89f4cc27[m
+Author: Allen <kund41248@gmail.com>
+Date:   Sun Jun 28 13:30:22 2026 +0800
+
+    Add files via upload
+
+[33mcommit 2ec496e22acb5b98385b20c222615cc19f343307[m
+Author: Allen <kund41248@gmail.com>
+Date:   Fri Jun 26 12:03:45 2026 +0800
+
+    Add files via upload
+    
+    这是一个简单的拼图小游戏,用trae写的

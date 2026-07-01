@@ -881,7 +881,7 @@
             const ds = ps - gap * 2, r = Math.max(3, ps * 0.06);
             ctx.save();
             roundRect(ctx, dx, dy, ds, ds, r); ctx.clip();
-            ctx.drawImage(state.currentImage, sx, sy, ps, ps, dx - gap, dy - gap, ps, ps);
+            ctx.drawImage(state.currentImage, sx, sy, ps, ps, dx, dy, ps, ps);
             ctx.restore();
             ctx.strokeStyle = 'rgba(255,255,255,0.15)'; ctx.lineWidth = 0.5;
             roundRect(ctx, dx, dy, ds, ds, r); ctx.stroke();
