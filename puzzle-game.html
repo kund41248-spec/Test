@@ -474,19 +474,19 @@
             <div class="section">
                 <div class="section-title">难度等级</div>
                 <div class="difficulty-buttons">
-                    <button class="diff-btn active" onclick="setDifficulty(3)" id="diff-3">简单 3×3</button>
-                    <button class="diff-btn" onclick="setDifficulty(4)" id="diff-4">中等 4×4</button>
-                    <button class="diff-btn" onclick="setDifficulty(5)" id="diff-5">困难 5×5</button>
-                    <button class="diff-btn" onclick="setDifficulty(6)" id="diff-6">专家 6×6</button>
+                    <button class="diff-btn active" onclick="setDifficulty(3)" id="diff-3" data-size="3">简单 3×3</button>
+                    <button class="diff-btn" onclick="setDifficulty(4)" id="diff-4" data-size="4">中等 4×4</button>
+                    <button class="diff-btn" onclick="setDifficulty(5)" id="diff-5" data-size="5">困难 5×5</button>
+                    <button class="diff-btn" onclick="setDifficulty(6)" id="diff-6" data-size="6">专家 6×6</button>
                 </div>
             </div>
 
             <div class="section">
                 <div class="section-title">游戏模式</div>
                 <div class="mode-buttons">
-                    <button class="mode-btn active" onclick="setGameMode('classic')">🎯 经典模式</button>
-                    <button class="mode-btn" onclick="setGameMode('timed')">⏱️ 限时模式 (60秒)</button>
-                    <button class="mode-btn" onclick="setGameMode('limited')">📊 步数限制</button>
+                    <button class="mode-btn active" onclick="setGameMode('classic')" data-mode="classic">🎯 经典模式</button>
+                    <button class="mode-btn" onclick="setGameMode('timed')" data-mode="timed">⏱️ 限时模式 (60秒)</button>
+                    <button class="mode-btn" onclick="setGameMode('limited')" data-mode="limited">📊 步数限制</button>
                 </div>
             </div>
 
@@ -530,13 +530,43 @@
     <input type="file" id="fileInput" accept="image/*" style="display: none;" onchange="handleFileUpload(event)">
 
     <script>
+        // ============================================================
+        // SECTION 1: CONSTANTS & DOM REFS
+        // ============================================================
+        const CANVAS_SIZE = 600;
+        const SHUFFLE_FACTOR = 10;
+
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
-        const canvasSize = 600;
-
-        // ===== Background particles =====
         const bgCanvas = document.getElementById('bgParticles');
         const bgCtx = bgCanvas.getContext('2d');
+
+        // ============================================================
+        // SECTION 2: STATE
+        // ============================================================
+        const state = {
+            gridSize: 3,
+            tiles: [],
+            blankRow: 0,
+            blankCol: 0,
+            moves: 0,
+            seconds: 0,
+            gameStarted: false,
+            gameOver: false,
+            timerInterval: null,
+            currentImage: null,
+            currentImageIndex: 0,
+            showingHint: false,
+            gameMode: 'classic',
+            timeLimit: 60,
+            moveLimit: 0,
+        };
+
+        function get pieceSize() { return CANVAS_SIZE / state.gridSize; }
+
+        // ============================================================
+        // SECTION 3: BACKGROUND PARTICLES
+        // ============================================================
         let particles = [];
 
         function resizeBgCanvas() {
@@ -553,893 +583,546 @@
                 size: Math.random() * 3 + 1,
                 speed: Math.random() * 1.5 + 0.5,
                 opacity: Math.random() * 0.4 + 0.1,
-                hue: Math.random() * 60 + 240 // blue-purple range
+                hue: Math.random() * 60 + 240,
             };
         }
 
-        // Initialize particles
         for (let i = 0; i < 60; i++) {
             const p = createParticle();
-            p.y = Math.random() * bgCanvas.height; // scatter initially
+            p.y = Math.random() * bgCanvas.height;
             particles.push(p);
         }
 
         function animateParticles() {
             bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
-
             particles.forEach((p, i) => {
                 p.y -= p.speed;
                 p.opacity -= 0.0003;
-                if (p.y < -10 || p.opacity <= 0) {
-                    particles[i] = createParticle();
-                }
+                if (p.y < -10 || p.opacity <= 0) particles[i] = createParticle();
                 bgCtx.beginPath();
                 bgCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
                 bgCtx.fillStyle = `hsla(${p.hue}, 70%, 70%, ${p.opacity})`;
                 bgCtx.fill();
             });
-
-            // Keep particle count
-            while (particles.length < 60) {
-                particles.push(createParticle());
-            }
-
+            while (particles.length < 60) particles.push(createParticle());
             requestAnimationFrame(animateParticles);
         }
         animateParticles();
 
-        // ===== Game logic =====
-        
-        let pieces = [];
-        let selectedPiece = null;
-        let gridSize = 3;
-        let pieceSize;
-        let moves = 0;
-        let gameStarted = false;
-        let timerInterval;
-        let seconds = 0;
-        let currentImage = null;
-        let showingHint = false;
-        let gameMode = 'classic';
-        let timeLimit = 60;
-        let moveLimit = 0;
-        
-        const presetImages = [
-            { name: '渐变方块', generator: createGradientBlocksImage },
-            { name: '星空', generator: createStarfieldImage },
-            { name: '彩虹', generator: createRainbowImage },
-            { name: '几何图案', generator: createGeometricPatternImage },
-            { name: '花朵', generator: createFlowerImage },
-            { name: '山脉', generator: createMountainsImage },
-            { name: '海洋', generator: createOceanImage },
-            { name: '城市夜景', generator: createCityNightImage }
-        ];
-        
-        let currentImageIndex = 0;
-
+        // ============================================================
+        // SECTION 4: IMAGE GENERATORS
+        // ============================================================
         function createGradientBlocksImage() {
-            const tempCanvas = document.createElement('canvas');
-            tempCanvas.width = canvasSize;
-            tempCanvas.height = canvasSize;
-            const tempCtx = tempCanvas.getContext('2d');
-            
-            const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#98D8C8', '#F7DC6F', '#BB8FCE'];
-            
+            const c = document.createElement('canvas');
+            c.width = CANVAS_SIZE; c.height = CANVAS_SIZE;
+            const cx = c.getContext('2d');
+            const colors = ['#FF6B6B','#4ECDC4','#45B7D1','#96CEB4','#FFEAA7','#DDA0DD','#98D8C8','#F7DC6F','#BB8FCE'];
             for (let i = 0; i < 9; i++) {
-                const row = Math.floor(i / 3);
-                const col = i % 3;
-                const x = col * (canvasSize / 3);
-                const y = row * (canvasSize / 3);
-                const gradient = tempCtx.createLinearGradient(x, y, x + canvasSize/3, y + canvasSize/3);
-                gradient.addColorStop(0, colors[i]);
-                gradient.addColorStop(1, adjustColor(colors[i], -30));
-                tempCtx.fillStyle = gradient;
-                tempCtx.fillRect(x, y, canvasSize/3, canvasSize/3);
-                
-                tempCtx.fillStyle = 'rgba(255,255,255,0.3)';
-                tempCtx.font = 'bold 40px Arial';
-                tempCtx.textAlign = 'center';
-                tempCtx.textBaseline = 'middle';
-                tempCtx.fillText(i + 1, x + canvasSize/6, y + canvasSize/6);
+                const row = Math.floor(i/3), col = i%3;
+                const x = col*(CANVAS_SIZE/3), y = row*(CANVAS_SIZE/3);
+                const g = cx.createLinearGradient(x,y,x+CANVAS_SIZE/3,y+CANVAS_SIZE/3);
+                g.addColorStop(0, colors[i]); g.addColorStop(1, adjustColor(colors[i],-30));
+                cx.fillStyle = g; cx.fillRect(x,y,CANVAS_SIZE/3,CANVAS_SIZE/3);
+                cx.fillStyle = 'rgba(255,255,255,0.3)';
+                cx.font = 'bold 40px Arial'; cx.textAlign = 'center'; cx.textBaseline = 'middle';
+                cx.fillText(i+1, x+CANVAS_SIZE/6, y+CANVAS_SIZE/6);
             }
-            return tempCanvas;
+            return c;
         }
 
         function createStarfieldImage() {
-            const tempCanvas = document.createElement('canvas');
-            tempCanvas.width = canvasSize;
-            tempCanvas.height = canvasSize;
-            const tempCtx = tempCanvas.getContext('2d');
-            
-            const gradient = tempCtx.createLinearGradient(0, 0, 0, canvasSize);
-            gradient.addColorStop(0, '#0a0a2e');
-            gradient.addColorStop(0.5, '#1a1a4e');
-            gradient.addColorStop(1, '#0a0a2e');
-            tempCtx.fillStyle = gradient;
-            tempCtx.fillRect(0, 0, canvasSize, canvasSize);
-            
+            const c = document.createElement('canvas');
+            c.width = CANVAS_SIZE; c.height = CANVAS_SIZE;
+            const cx = c.getContext('2d');
+            const g = cx.createLinearGradient(0,0,0,CANVAS_SIZE);
+            g.addColorStop(0,'#0a0a2e'); g.addColorStop(0.5,'#1a1a4e'); g.addColorStop(1,'#0a0a2e');
+            cx.fillStyle = g; cx.fillRect(0,0,CANVAS_SIZE,CANVAS_SIZE);
             for (let i = 0; i < 200; i++) {
-                const x = Math.random() * canvasSize;
-                const y = Math.random() * canvasSize;
-                const size = Math.random() * 3 + 1;
-                const alpha = Math.random() * 0.8 + 0.2;
-                
-                tempCtx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
-                tempCtx.beginPath();
-                tempCtx.arc(x, y, size, 0, Math.PI * 2);
-                tempCtx.fill();
+                cx.fillStyle = `rgba(255,255,255,${Math.random()*0.8+0.2})`;
+                cx.beginPath(); cx.arc(Math.random()*CANVAS_SIZE, Math.random()*CANVAS_SIZE, Math.random()*3+1, 0, Math.PI*2); cx.fill();
             }
-            
-            for (let i = 0; i < 5; i++) {
-                const x = Math.random() * canvasSize;
-                const y = Math.random() * canvasSize;
-                drawStar(tempCtx, x, y, 5, 20, 10, '#FFD700');
-            }
-            
-            return tempCanvas;
+            for (let i = 0; i < 5; i++) drawStar(cx, Math.random()*CANVAS_SIZE, Math.random()*CANVAS_SIZE, 5, 20, 10, '#FFD700');
+            return c;
         }
 
         function createRainbowImage() {
-            const tempCanvas = document.createElement('canvas');
-            tempCanvas.width = canvasSize;
-            tempCanvas.height = canvasSize;
-            const tempCtx = tempCanvas.getContext('2d');
-            
-            tempCtx.fillStyle = '#87CEEB';
-            tempCtx.fillRect(0, 0, canvasSize, canvasSize);
-            
-            const rainbowColors = ['#FF0000', '#FF7F00', '#FFFF00', '#00FF00', '#0000FF', '#4B0082', '#8B00FF'];
-            
-            for (let i = 0; i < rainbowColors.length; i++) {
-                tempCtx.beginPath();
-                tempCtx.arc(canvasSize/2, canvasSize + 100, 400 - i * 30, Math.PI, 0, false);
-                tempCtx.lineWidth = 35;
-                tempCtx.strokeStyle = rainbowColors[i];
-                tempCtx.stroke();
-            }
-            
-            tempCtx.fillStyle = '#FFFFFF';
-            tempCtx.beginPath();
-            tempCtx.arc(canvasSize/2, canvasSize/3, 50, 0, Math.PI * 2);
-            tempCtx.fill();
-            
-            return tempCanvas;
+            const c = document.createElement('canvas');
+            c.width = CANVAS_SIZE; c.height = CANVAS_SIZE;
+            const cx = c.getContext('2d');
+            cx.fillStyle = '#87CEEB'; cx.fillRect(0,0,CANVAS_SIZE,CANVAS_SIZE);
+            const rc = ['#FF0000','#FF7F00','#FFFF00','#00FF00','#0000FF','#4B0082','#8B00FF'];
+            rc.forEach((clr,i) => {
+                cx.beginPath(); cx.arc(CANVAS_SIZE/2, CANVAS_SIZE+100, 400-i*30, Math.PI, 0);
+                cx.lineWidth = 35; cx.strokeStyle = clr; cx.stroke();
+            });
+            cx.fillStyle = '#FFF'; cx.beginPath(); cx.arc(CANVAS_SIZE/2, CANVAS_SIZE/3, 50, 0, Math.PI*2); cx.fill();
+            return c;
         }
 
         function createGeometricPatternImage() {
-            const tempCanvas = document.createElement('canvas');
-            tempCanvas.width = canvasSize;
-            tempCanvas.height = canvasSize;
-            const tempCtx = tempCanvas.getContext('2d');
-            
-            tempCtx.fillStyle = '#2C3E50';
-            tempCtx.fillRect(0, 0, canvasSize, canvasSize);
-            
+            const c = document.createElement('canvas');
+            c.width = CANVAS_SIZE; c.height = CANVAS_SIZE;
+            const cx = c.getContext('2d');
+            cx.fillStyle = '#2C3E50'; cx.fillRect(0,0,CANVAS_SIZE,CANVAS_SIZE);
             const shapes = [
-                { type: 'circle', color: '#E74C3C', x: 150, y: 150, size: 80 },
-                { type: 'triangle', color: '#3498DB', x: 450, y: 150, size: 80 },
-                { type: 'square', color: '#2ECC71', x: 300, y: 300, size: 80 },
-                { type: 'diamond', color: '#F39C12', x: 150, y: 450, size: 80 },
-                { type: 'hexagon', color: '#9B59B6', x: 450, y: 450, size: 60 }
+                {type:'circle',color:'#E74C3C',x:150,y:150,size:80},
+                {type:'triangle',color:'#3498DB',x:450,y:150,size:80},
+                {type:'square',color:'#2ECC71',x:300,y:300,size:80},
+                {type:'diamond',color:'#F39C12',x:150,y:450,size:80},
+                {type:'hexagon',color:'#9B59B6',x:450,y:450,size:60},
             ];
-            
-            shapes.forEach(shape => {
-                tempCtx.fillStyle = shape.color;
-                switch(shape.type) {
-                    case 'circle':
-                        tempCtx.beginPath();
-                        tempCtx.arc(shape.x, shape.y, shape.size, 0, Math.PI * 2);
-                        tempCtx.fill();
-                        break;
-                    case 'triangle':
-                        tempCtx.beginPath();
-                        tempCtx.moveTo(shape.x, shape.y - shape.size);
-                        tempCtx.lineTo(shape.x - shape.size, shape.y + shape.size);
-                        tempCtx.lineTo(shape.x + shape.size, shape.y + shape.size);
-                        tempCtx.closePath();
-                        tempCtx.fill();
-                        break;
-                    case 'square':
-                        tempCtx.fillRect(shape.x - shape.size/2, shape.y - shape.size/2, shape.size, shape.size);
-                        break;
-                    case 'diamond':
-                        tempCtx.beginPath();
-                        tempCtx.moveTo(shape.x, shape.y - shape.size);
-                        tempCtx.lineTo(shape.x + shape.size, shape.y);
-                        tempCtx.lineTo(shape.x, shape.y + shape.size);
-                        tempCtx.lineTo(shape.x - shape.size, shape.y);
-                        tempCtx.closePath();
-                        tempCtx.fill();
-                        break;
-                    case 'hexagon':
-                        drawHexagon(tempCtx, shape.x, shape.y, shape.size);
-                        break;
+            shapes.forEach(s => {
+                cx.fillStyle = s.color;
+                switch(s.type) {
+                    case 'circle': cx.beginPath(); cx.arc(s.x,s.y,s.size,0,Math.PI*2); cx.fill(); break;
+                    case 'triangle': cx.beginPath(); cx.moveTo(s.x,s.y-s.size); cx.lineTo(s.x-s.size,s.y+s.size); cx.lineTo(s.x+s.size,s.y+s.size); cx.closePath(); cx.fill(); break;
+                    case 'square': cx.fillRect(s.x-s.size/2,s.y-s.size/2,s.size,s.size); break;
+                    case 'diamond': cx.beginPath(); cx.moveTo(s.x,s.y-s.size); cx.lineTo(s.x+s.size,s.y); cx.lineTo(s.x,s.y+s.size); cx.lineTo(s.x-s.size,s.y); cx.closePath(); cx.fill(); break;
+                    case 'hexagon': drawHexagon(cx,s.x,s.y,s.size); break;
                 }
             });
-            
-            return tempCanvas;
+            return c;
         }
 
         function createFlowerImage() {
-            const tempCanvas = document.createElement('canvas');
-            tempCanvas.width = canvasSize;
-            tempCanvas.height = canvasSize;
-            const tempCtx = tempCanvas.getContext('2d');
-            
-            const gradient = tempCtx.createLinearGradient(0, 0, canvasSize, canvasSize);
-            gradient.addColorStop(0, '#FFF5F5');
-            gradient.addColorStop(1, '#FFE4E1');
-            tempCtx.fillStyle = gradient;
-            tempCtx.fillRect(0, 0, canvasSize, canvasSize);
-            
-            drawFlower(tempCtx, 150, 150, '#FF69B4', '#FF1493');
-            drawFlower(tempCtx, 450, 150, '#FFB6C1', '#FF69B4');
-            drawFlower(tempCtx, 300, 350, '#FFC0CB', '#FF69B4');
-            drawFlower(tempCtx, 150, 450, '#DB7093', '#FF1493');
-            drawFlower(tempCtx, 450, 450, '#FFB6C1', '#FF69B4');
-            
-            return tempCanvas;
+            const c = document.createElement('canvas');
+            c.width = CANVAS_SIZE; c.height = CANVAS_SIZE;
+            const cx = c.getContext('2d');
+            const g = cx.createLinearGradient(0,0,CANVAS_SIZE,CANVAS_SIZE);
+            g.addColorStop(0,'#FFF5F5'); g.addColorStop(1,'#FFE4E1');
+            cx.fillStyle = g; cx.fillRect(0,0,CANVAS_SIZE,CANVAS_SIZE);
+            drawFlower(cx,150,150,'#FF69B4','#FF1493');
+            drawFlower(cx,450,150,'#FFB6C1','#FF69B4');
+            drawFlower(cx,300,350,'#FFC0CB','#FF69B4');
+            drawFlower(cx,150,450,'#DB7093','#FF1493');
+            drawFlower(cx,450,450,'#FFB6C1','#FF69B4');
+            return c;
         }
 
         function createMountainsImage() {
-            const tempCanvas = document.createElement('canvas');
-            tempCanvas.width = canvasSize;
-            tempCanvas.height = canvasSize;
-            const tempCtx = tempCanvas.getContext('2d');
-            
-            const skyGradient = tempCtx.createLinearGradient(0, 0, 0, canvasSize * 0.6);
-            skyGradient.addColorStop(0, '#87CEEB');
-            skyGradient.addColorStop(1, '#E0F6FF');
-            tempCtx.fillStyle = skyGradient;
-            tempCtx.fillRect(0, 0, canvasSize, canvasSize);
-            
-            tempCtx.fillStyle = '#FFFFFF';
-            tempCtx.beginPath();
-            tempCtx.arc(100, 100, 40, 0, Math.PI * 2);
-            tempCtx.fill();
-            tempCtx.beginPath();
-            tempCtx.arc(130, 80, 30, 0, Math.PI * 2);
-            tempCtx.fill();
-            
-            tempCtx.fillStyle = '#8B7355';
-            tempCtx.beginPath();
-            tempCtx.moveTo(0, canvasSize * 0.6);
-            tempCtx.lineTo(150, canvasSize * 0.3);
-            tempCtx.lineTo(300, canvasSize * 0.5);
-            tempCtx.lineTo(450, canvasSize * 0.25);
-            tempCtx.lineTo(600, canvasSize * 0.55);
-            tempCtx.lineTo(600, canvasSize);
-            tempCtx.lineTo(0, canvasSize);
-            tempCtx.closePath();
-            tempCtx.fill();
-            
-            tempCtx.fillStyle = '#654321';
-            tempCtx.beginPath();
-            tempCtx.moveTo(0, canvasSize * 0.75);
-            tempCtx.lineTo(100, canvasSize * 0.55);
-            tempCtx.lineTo(250, canvasSize * 0.7);
-            tempCtx.lineTo(400, canvasSize * 0.5);
-            tempCtx.lineTo(550, canvasSize * 0.7);
-            tempCtx.lineTo(600, canvasSize);
-            tempCtx.lineTo(0, canvasSize);
-            tempCtx.closePath();
-            tempCtx.fill();
-            
-            return tempCanvas;
+            const c = document.createElement('canvas');
+            c.width = CANVAS_SIZE; c.height = CANVAS_SIZE;
+            const cx = c.getContext('2d');
+            const sg = cx.createLinearGradient(0,0,0,CANVAS_SIZE*0.6);
+            sg.addColorStop(0,'#87CEEB'); sg.addColorStop(1,'#E0F6FF');
+            cx.fillStyle = sg; cx.fillRect(0,0,CANVAS_SIZE,CANVAS_SIZE);
+            cx.fillStyle = '#FFF'; cx.beginPath(); cx.arc(100,100,40,0,Math.PI*2); cx.fill(); cx.beginPath(); cx.arc(130,80,30,0,Math.PI*2); cx.fill();
+            cx.fillStyle = '#8B7355'; cx.beginPath(); cx.moveTo(0,CANVAS_SIZE*0.6); cx.lineTo(150,CANVAS_SIZE*0.3); cx.lineTo(300,CANVAS_SIZE*0.5); cx.lineTo(450,CANVAS_SIZE*0.25); cx.lineTo(600,CANVAS_SIZE*0.55); cx.lineTo(600,CANVAS_SIZE); cx.lineTo(0,CANVAS_SIZE); cx.closePath(); cx.fill();
+            cx.fillStyle = '#654321'; cx.beginPath(); cx.moveTo(0,CANVAS_SIZE*0.75); cx.lineTo(100,CANVAS_SIZE*0.55); cx.lineTo(250,CANVAS_SIZE*0.7); cx.lineTo(400,CANVAS_SIZE*0.5); cx.lineTo(550,CANVAS_SIZE*0.7); cx.lineTo(600,CANVAS_SIZE); cx.lineTo(0,CANVAS_SIZE); cx.closePath(); cx.fill();
+            return c;
         }
 
         function createOceanImage() {
-            const tempCanvas = document.createElement('canvas');
-            tempCanvas.width = canvasSize;
-            tempCanvas.height = canvasSize;
-            const tempCtx = tempCanvas.getContext('2d');
-            
-            const skyGradient = tempCtx.createLinearGradient(0, 0, 0, canvasSize * 0.5);
-            skyGradient.addColorStop(0, '#1E90FF');
-            skyGradient.addColorStop(1, '#87CEEB');
-            tempCtx.fillStyle = skyGradient;
-            tempCtx.fillRect(0, 0, canvasSize, canvasSize * 0.5);
-            
-            const oceanGradient = tempCtx.createLinearGradient(0, canvasSize * 0.5, 0, canvasSize);
-            oceanGradient.addColorStop(0, '#006994');
-            oceanGradient.addColorStop(0.5, '#004D70');
-            oceanGradient.addColorStop(1, '#00334D');
-            tempCtx.fillStyle = oceanGradient;
-            tempCtx.fillRect(0, canvasSize * 0.5, canvasSize, canvasSize * 0.5);
-            
-            for (let i = 0; i < 5; i++) {
-                tempCtx.beginPath();
-                tempCtx.moveTo(0, canvasSize * 0.5 + i * 60);
-                for (let x = 0; x <= canvasSize; x += 20) {
-                    const y = canvasSize * 0.5 + i * 60 + Math.sin(x * 0.02 + i) * 10;
-                    tempCtx.lineTo(x, y);
-                }
-                tempCtx.lineTo(canvasSize, canvasSize);
-                tempCtx.lineTo(0, canvasSize);
-                tempCtx.closePath();
-                tempCtx.fillStyle = `rgba(255, 255, 255, ${0.1 - i * 0.015})`;
-                tempCtx.fill();
+            const c = document.createElement('canvas');
+            c.width = CANVAS_SIZE; c.height = CANVAS_SIZE;
+            const cx = c.getContext('2d');
+            const sg = cx.createLinearGradient(0,0,0,CANVAS_SIZE*0.5);
+            sg.addColorStop(0,'#1E90FF'); sg.addColorStop(1,'#87CEEB');
+            cx.fillStyle = sg; cx.fillRect(0,0,CANVAS_SIZE,CANVAS_SIZE*0.5);
+            const og = cx.createLinearGradient(0,CANVAS_SIZE*0.5,0,CANVAS_SIZE);
+            og.addColorStop(0,'#006994'); og.addColorStop(0.5,'#004D70'); og.addColorStop(1,'#00334D');
+            cx.fillStyle = og; cx.fillRect(0,CANVAS_SIZE*0.5,CANVAS_SIZE,CANVAS_SIZE*0.5);
+            for (let i=0;i<5;i++) {
+                cx.beginPath(); cx.moveTo(0,CANVAS_SIZE*0.5+i*60);
+                for (let x=0;x<=CANVAS_SIZE;x+=20) cx.lineTo(x,CANVAS_SIZE*0.5+i*60+Math.sin(x*0.02+i)*10);
+                cx.lineTo(CANVAS_SIZE,CANVAS_SIZE); cx.lineTo(0,CANVAS_SIZE); cx.closePath();
+                cx.fillStyle = `rgba(255,255,255,${0.1-i*0.015})`; cx.fill();
             }
-            
-            tempCtx.fillStyle = '#FFFFFF';
-            tempCtx.beginPath();
-            tempCtx.moveTo(500, 50);
-            tempCtx.lineTo(520, 80);
-            tempCtx.lineTo(480, 80);
-            tempCtx.closePath();
-            tempCtx.fill();
-            
-            return tempCanvas;
+            cx.fillStyle = '#FFF'; cx.beginPath(); cx.moveTo(500,50); cx.lineTo(520,80); cx.lineTo(480,80); cx.closePath(); cx.fill();
+            return c;
         }
 
         function createCityNightImage() {
-            const tempCanvas = document.createElement('canvas');
-            tempCanvas.width = canvasSize;
-            tempCanvas.height = canvasSize;
-            const tempCtx = tempCanvas.getContext('2d');
-            
-            const skyGradient = tempCtx.createLinearGradient(0, 0, 0, canvasSize);
-            skyGradient.addColorStop(0, '#0a0a1a');
-            skyGradient.addColorStop(0.5, '#1a1a3a');
-            skyGradient.addColorStop(1, '#2a2a4a');
-            tempCtx.fillStyle = skyGradient;
-            tempCtx.fillRect(0, 0, canvasSize, canvasSize);
-            
-            for (let i = 0; i < 100; i++) {
-                const x = Math.random() * canvasSize;
-                const y = Math.random() * canvasSize * 0.6;
-                tempCtx.fillStyle = `rgba(255, 255, 255, ${Math.random() * 0.8})`;
-                tempCtx.beginPath();
-                tempCtx.arc(x, y, Math.random() * 2, 0, Math.PI * 2);
-                tempCtx.fill();
-            }
-            
+            const c = document.createElement('canvas');
+            c.width = CANVAS_SIZE; c.height = CANVAS_SIZE;
+            const cx = c.getContext('2d');
+            const sg = cx.createLinearGradient(0,0,0,CANVAS_SIZE);
+            sg.addColorStop(0,'#0a0a1a'); sg.addColorStop(0.5,'#1a1a3a'); sg.addColorStop(1,'#2a2a4a');
+            cx.fillStyle = sg; cx.fillRect(0,0,CANVAS_SIZE,CANVAS_SIZE);
+            for (let i=0;i<100;i++) { cx.fillStyle=`rgba(255,255,255,${Math.random()*0.8})`; cx.beginPath(); cx.arc(Math.random()*CANVAS_SIZE,Math.random()*CANVAS_SIZE*0.6,Math.random()*2,0,Math.PI*2); cx.fill(); }
             const buildings = [
-                { x: 50, width: 80, height: 300, color: '#2C3E50' },
-                { x: 150, width: 100, height: 400, color: '#34495E' },
-                { x: 270, width: 60, height: 250, color: '#2C3E50' },
-                { x: 350, width: 120, height: 450, color: '#1A252F' },
-                { x: 490, width: 80, height: 350, color: '#34495E' }
+                {x:50,w:80,h:300,c:'#2C3E50'},{x:150,w:100,h:400,c:'#34495E'},{x:270,w:60,h:250,c:'#2C3E50'},
+                {x:350,w:120,h:450,c:'#1A252F'},{x:490,w:80,h:350,c:'#34495E'}
             ];
-            
-            buildings.forEach(building => {
-                tempCtx.fillStyle = building.color;
-                tempCtx.fillRect(building.x, canvasSize - building.height, building.width, building.height);
-                
-                for (let floor = 0; floor < building.height; floor += 40) {
-                    for (let window = 0; window < building.width; window += 25) {
-                        if (Math.random() > 0.3) {
-                            tempCtx.fillStyle = Math.random() > 0.5 ? '#FFD700' : '#FF6B6B';
-                            tempCtx.fillRect(building.x + window + 5, canvasSize - building.height + floor + 10, 15, 20);
-                        }
-                    }
-                }
+            buildings.forEach(b => {
+                cx.fillStyle = b.c; cx.fillRect(b.x,CANVAS_SIZE-b.h,b.w,b.h);
+                for (let f=0;f<b.h;f+=40) for (let wi=0;wi<b.w;wi+=25) if (Math.random()>0.3) { cx.fillStyle=Math.random()>0.5?'#FFD700':'#FF6B6B'; cx.fillRect(b.x+wi+5,CANVAS_SIZE-b.h+f+10,15,20); }
             });
-            
-            return tempCanvas;
+            return c;
         }
 
-        function drawStar(ctx, cx, cy, spikes, outerRadius, innerRadius, color) {
-            let rot = Math.PI / 2 * 3;
-            let x = cx;
-            let y = cy;
-            const step = Math.PI / spikes;
-            
+        const presetImages = [
+            { name:'渐变方块', generator:createGradientBlocksImage },
+            { name:'星空', generator:createStarfieldImage },
+            { name:'彩虹', generator:createRainbowImage },
+            { name:'几何图案', generator:createGeometricPatternImage },
+            { name:'花朵', generator:createFlowerImage },
+            { name:'山脉', generator:createMountainsImage },
+            { name:'海洋', generator:createOceanImage },
+            { name:'城市夜景', generator:createCityNightImage },
+        ];
+
+        // ---- Drawing helpers ----
+        function drawStar(ctx, cx, cy, spikes, outerR, innerR, color) {
+            let rot = -Math.PI/2, step = Math.PI/spikes;
             ctx.beginPath();
-            ctx.moveTo(cx, cy - outerRadius);
-            
-            for (let i = 0; i < spikes; i++) {
-                x = cx + Math.cos(rot) * outerRadius;
-                y = cy + Math.sin(rot) * outerRadius;
-                ctx.lineTo(x, y);
-                rot += step;
-                
-                x = cx + Math.cos(rot) * innerRadius;
-                y = cy + Math.sin(rot) * innerRadius;
-                ctx.lineTo(x, y);
-                rot += step;
+            for (let i=0;i<spikes;i++) {
+                ctx.lineTo(cx+Math.cos(rot)*outerR, cy+Math.sin(rot)*outerR); rot+=step;
+                ctx.lineTo(cx+Math.cos(rot)*innerR, cy+Math.sin(rot)*innerR); rot+=step;
             }
-            
-            ctx.lineTo(cx, cy - outerRadius);
-            ctx.closePath();
-            ctx.fillStyle = color;
-            ctx.fill();
+            ctx.closePath(); ctx.fillStyle = color; ctx.fill();
         }
 
-        function drawHexagon(ctx, cx, cy, radius) {
+        function drawHexagon(ctx, cx, cy, r) {
             ctx.beginPath();
-            for (let i = 0; i < 6; i++) {
-                const angle = (Math.PI / 3) * i - Math.PI / 6;
-                const x = cx + radius * Math.cos(angle);
-                const y = cy + radius * Math.sin(angle);
-                if (i === 0) ctx.moveTo(x, y);
-                else ctx.lineTo(x, y);
-            }
-            ctx.closePath();
-            ctx.fill();
+            for (let i=0;i<6;i++) { const a=Math.PI/3*i-Math.PI/6; i===0?ctx.moveTo(cx+r*Math.cos(a),cy+r*Math.sin(a)):ctx.lineTo(cx+r*Math.cos(a),cy+r*Math.sin(a)); }
+            ctx.closePath(); ctx.fill();
         }
 
-        function drawFlower(ctx, cx, cy, petalColor, centerColor) {
-            ctx.fillStyle = petalColor;
-            for (let i = 0; i < 8; i++) {
-                const angle = (Math.PI / 4) * i;
-                ctx.save();
-                ctx.translate(cx, cy);
-                ctx.rotate(angle);
-                ctx.beginPath();
-                ctx.ellipse(0, -30, 25, 40, 0, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.restore();
-            }
-            
-            ctx.fillStyle = centerColor;
-            ctx.beginPath();
-            ctx.arc(cx, cy, 25, 0, Math.PI * 2);
-            ctx.fill();
+        function drawFlower(ctx, cx, cy, petal, center) {
+            ctx.fillStyle = petal;
+            for (let i=0;i<8;i++) { ctx.save(); ctx.translate(cx,cy); ctx.rotate(Math.PI/4*i); ctx.beginPath(); ctx.ellipse(0,-30,25,40,0,0,Math.PI*2); ctx.fill(); ctx.restore(); }
+            ctx.fillStyle = center; ctx.beginPath(); ctx.arc(cx,cy,25,0,Math.PI*2); ctx.fill();
         }
 
         function adjustColor(color, amount) {
-            const hex = color.replace('#', '');
-            const r = Math.max(0, Math.min(255, parseInt(hex.substr(0, 2), 16) + amount));
-            const g = Math.max(0, Math.min(255, parseInt(hex.substr(2, 2), 16) + amount));
-            const b = Math.max(0, Math.min(255, parseInt(hex.substr(4, 2), 16) + amount));
-            return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+            const h = color.replace('#','');
+            return `#${[0,2,4].map(i=>Math.max(0,Math.min(255,parseInt(h.substr(i,2),16)+amount)).toString(16).padStart(2,'0')).join('')}`;
         }
 
-        function initImageSelector() {
-            const selector = document.getElementById('imageSelector');
-            selector.innerHTML = '';
-            
-            presetImages.forEach((image, index) => {
-                const thumb = image.generator();
-                const imgElement = document.createElement('img');
-                imgElement.src = thumb.toDataURL();
-                imgElement.className = `image-thumb ${index === currentImageIndex ? 'active' : ''}`;
-                imgElement.title = image.name;
-                imgElement.onclick = () => selectPresetImage(index);
-                selector.appendChild(imgElement);
-            });
-            
-            const customThumb = document.createElement('div');
-            customThumb.className = 'image-thumb';
-            customThumb.style.display = 'flex';
-            customThumb.style.alignItems = 'center';
-            customThumb.style.justifyContent = 'center';
-            customThumb.style.fontSize = '24px';
-            customThumb.textContent = '+';
-            customThumb.title = '上传自定义图片';
-            customThumb.onclick = loadImage;
-            selector.appendChild(customThumb);
+        // ============================================================
+        // SECTION 5: PUZZLE LOGIC
+        // ============================================================
+        function initializePuzzle() {
+            const total = state.gridSize * state.gridSize - 1;
+            state.tiles = [];
+            for (let i = 0; i < total; i++) {
+                state.tiles.push({
+                    id: i,
+                    correctRow: Math.floor(i / state.gridSize),
+                    correctCol: i % state.gridSize,
+                    currentRow: Math.floor(i / state.gridSize),
+                    currentCol: i % state.gridSize,
+                });
+            }
+            state.blankRow = state.gridSize - 1;
+            state.blankCol = state.gridSize - 1;
         }
 
-        function selectPresetImage(index) {
-            currentImageIndex = index;
-            currentImage = presetImages[index].generator();
-            
-            document.querySelectorAll('.image-thumb').forEach((el, i) => {
-                el.classList.toggle('active', i === index);
+        function shufflePuzzle() {
+            initializePuzzle();
+            const numMoves = state.gridSize * state.gridSize * SHUFFLE_FACTOR;
+            for (let i = 0; i < numMoves; i++) {
+                const moves = [];
+                if (state.blankRow > 0) moves.push({dr:-1,dc:0});
+                if (state.blankRow < state.gridSize - 1) moves.push({dr:1,dc:0});
+                if (state.blankCol > 0) moves.push({dr:0,dc:-1});
+                if (state.blankCol < state.gridSize - 1) moves.push({dr:0,dc:1});
+                const m = moves[Math.floor(Math.random() * moves.length)];
+                const tr = state.blankRow + m.dr, tc = state.blankCol + m.dc;
+                const tile = getTileAt(tr, tc);
+                if (!tile) continue;
+                tile.currentRow = state.blankRow;
+                tile.currentCol = state.blankCol;
+                state.blankRow = tr;
+                state.blankCol = tc;
+            }
+        }
+
+        function getTileAt(row, col) {
+            return state.tiles.find(t => t.currentRow === row && t.currentCol === col);
+        }
+
+        function isAdjacentToBlank(row, col) {
+            return Math.abs(row - state.blankRow) + Math.abs(col - state.blankCol) === 1;
+        }
+
+        function moveTile(tile) {
+            const tr = tile.currentRow, tc = tile.currentCol;
+            tile.currentRow = state.blankRow;
+            tile.currentCol = state.blankCol;
+            state.blankRow = tr;
+            state.blankCol = tc;
+        }
+
+        function isComplete() {
+            return state.tiles.every(t => t.currentRow === t.correctRow && t.currentCol === t.correctCol);
+        }
+
+        // ============================================================
+        // SECTION 6: RENDERING
+        // ============================================================
+        function renderBoard() {
+            const ps = CANVAS_SIZE / state.gridSize;
+            const gap = Math.max(2, ps * 0.04);
+            ctx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+            ctx.fillStyle = '#1a1a2e';
+            ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+
+            state.tiles.forEach(t => renderTile(t, gap));
+
+            // Bevel effects
+            state.tiles.forEach(t => {
+                const x = t.currentCol * ps + gap, y = t.currentRow * ps + gap, w = ps - gap * 2;
+                ctx.strokeStyle = 'rgba(255,255,255,0.25)'; ctx.lineWidth = 1.5;
+                ctx.beginPath(); ctx.moveTo(x, y+w); ctx.lineTo(x, y); ctx.lineTo(x+w, y); ctx.stroke();
+                ctx.strokeStyle = 'rgba(0,0,0,0.4)';
+                ctx.beginPath(); ctx.moveTo(x+w, y); ctx.lineTo(x+w, y+w); ctx.lineTo(x, y+w); ctx.stroke();
             });
-            
+
+            // Blank slot on top
+            renderBlankSlot(gap);
+        }
+
+        function renderTile(tile, gap) {
+            const ps = CANVAS_SIZE / state.gridSize;
+            const sx = tile.correctCol * ps, sy = tile.correctRow * ps;
+            const dx = tile.currentCol * ps + gap, dy = tile.currentRow * ps + gap;
+            const ds = ps - gap * 2, r = Math.max(3, ps * 0.06);
+            ctx.save();
+            roundRect(ctx, dx, dy, ds, ds, r); ctx.clip();
+            ctx.drawImage(state.currentImage, sx, sy, ps, ps, dx - gap, dy - gap, ps, ps);
+            ctx.restore();
+            ctx.strokeStyle = 'rgba(255,255,255,0.15)'; ctx.lineWidth = 0.5;
+            roundRect(ctx, dx, dy, ds, ds, r); ctx.stroke();
+        }
+
+        function renderBlankSlot(gap) {
+            const ps = CANVAS_SIZE / state.gridSize;
+            const x = state.blankCol * ps + gap, y = state.blankRow * ps + gap;
+            const s = ps - gap * 2, r = Math.max(3, ps * 0.06);
+            ctx.fillStyle = '#16213e';
+            ctx.beginPath(); roundRect(ctx, x, y, s, s, r); ctx.fill();
+            ctx.strokeStyle = 'rgba(255,255,255,0.12)'; ctx.lineWidth = 1.5; ctx.setLineDash([4,4]);
+            roundRect(ctx, x+4, y+4, s-8, s-8, r-2); ctx.stroke(); ctx.setLineDash([]);
+            // Three subtle dots
+            ctx.fillStyle = 'rgba(255,255,255,0.15)';
+            const cx = x + s/2, cy = y + s/2;
+            for (let i=0;i<3;i++) { const a=Math.PI*2/3*i-Math.PI/2; ctx.beginPath(); ctx.arc(cx+Math.cos(a)*10,cy+Math.sin(a)*10,3,0,Math.PI*2); ctx.fill(); }
+        }
+
+        function roundRect(ctx, x, y, w, h, r) {
+            ctx.beginPath();
+            ctx.moveTo(x+r, y); ctx.lineTo(x+w-r, y); ctx.arcTo(x+w, y, x+w, y+r, r);
+            ctx.lineTo(x+w, y+h-r); ctx.arcTo(x+w, y+h, x+w-r, y+h, r);
+            ctx.lineTo(x+r, y+h); ctx.arcTo(x, y+h, x, y+h-r, r);
+            ctx.lineTo(x, y+r); ctx.arcTo(x, y, x+r, y, r); ctx.closePath();
+        }
+
+        // ============================================================
+        // SECTION 7: GAME CONTROLS
+        // ============================================================
+        function setDifficulty(size) {
+            state.gridSize = size;
+            document.querySelectorAll('.diff-btn').forEach(el => el.classList.toggle('active', parseInt(el.dataset.size) === size));
+            if (state.gameMode === 'limited') {
+                state.moveLimit = size * size * 3;
+                document.getElementById('limitCount').textContent = state.moveLimit;
+            }
             startNewGame();
         }
 
-        function loadImage() {
-            document.getElementById('fileInput').click();
-        }
-
-        function handleFileUpload(event) {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const img = new Image();
-                    img.onload = function() {
-                        currentImage = img;
-                        currentImageIndex = -1;
-                        document.querySelectorAll('.image-thumb').forEach(el => el.classList.remove('active'));
-                        startNewGame();
-                    };
-                    img.src = e.target.result;
-                };
-                reader.readAsDataURL(file);
-            }
-        }
-
-        function setDifficulty(size) {
-            gridSize = size;
-            
-            document.querySelectorAll('.diff-btn').forEach(el => el.classList.remove('active'));
-            document.getElementById(`diff-${size}`).classList.add('active');
-            
-            if (gameMode === 'limited') {
-                moveLimit = size * size * 3;
-                document.getElementById('limitCount').textContent = moveLimit;
-            }
-        }
-
         function setGameMode(mode) {
-            gameMode = mode;
-            
-            document.querySelectorAll('.mode-btn').forEach(el => el.classList.remove('active'));
-            event.target.classList.add('active');
-            
-            const limitDisplay = document.getElementById('limitDisplay');
-            
+            state.gameMode = mode;
+            document.querySelectorAll('.mode-btn').forEach(el => el.classList.toggle('active', el.dataset.mode === mode));
+            const ld = document.getElementById('limitDisplay');
             if (mode === 'timed') {
-                timeLimit = 60;
-                limitDisplay.style.display = 'block';
-                document.getElementById('limitCount').textContent = timeLimit;
+                state.timeLimit = 60;
+                ld.style.display = 'block';
+                document.getElementById('limitCount').textContent = state.timeLimit;
             } else if (mode === 'limited') {
-                moveLimit = gridSize * gridSize * 3;
-                limitDisplay.style.display = 'block';
-                document.getElementById('limitCount').textContent = moveLimit;
+                state.moveLimit = state.gridSize * state.gridSize * 3;
+                ld.style.display = 'block';
+                document.getElementById('limitCount').textContent = state.moveLimit;
             } else {
-                limitDisplay.style.display = 'none';
+                ld.style.display = 'none';
             }
         }
 
         function startNewGame() {
-            pieceSize = canvasSize / gridSize;
-            
-            if (!currentImage) {
-                currentImage = presetImages[0].generator();
+            state.gameOver = false;
+            if (!state.currentImage) {
+                state.currentImage = presetImages[0].generator();
+                state.currentImageIndex = 0;
             }
-            
-            pieces = [];
-            moves = 0;
-            gameStarted = false;
-            showingHint = false;
-            clearInterval(timerInterval);
-            seconds = 0;
-            
+            state.moves = 0; state.gameStarted = false; state.showingHint = false;
+            clearInterval(state.timerInterval); state.seconds = 0;
             updateTimer();
-            document.getElementById('movesCount').textContent = moves;
-            
-            if (gameMode === 'timed') {
-                document.getElementById('limitCount').textContent = timeLimit;
-            } else if (gameMode === 'limited') {
-                moveLimit = gridSize * gridSize * 3;
-                document.getElementById('limitCount').textContent = moveLimit;
-            }
-            
-            for (let row = 0; row < gridSize; row++) {
-                for (let col = 0; col < gridSize; col++) {
-                    pieces.push({
-                        correctRow: row,
-                        correctCol: col,
-                        currentRow: row,
-                        currentCol: col,
-                        id: row * gridSize + col
-                    });
-                }
-            }
-            
-            shufflePieces();
-            draw();
+            document.getElementById('movesCount').textContent = state.moves;
+            if (state.gameMode === 'timed') document.getElementById('limitCount').textContent = state.timeLimit;
+            else if (state.gameMode === 'limited') { state.moveLimit = state.gridSize*state.gridSize*3; document.getElementById('limitCount').textContent = state.moveLimit; }
+            shufflePuzzle();
+            renderBoard();
             updateBestScores();
         }
 
-        function shufflePieces() {
-            for (let i = pieces.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                const tempRow = pieces[i].currentRow;
-                const tempCol = pieces[i].currentCol;
-                pieces[i].currentRow = pieces[j].currentRow;
-                pieces[i].currentCol = pieces[j].currentCol;
-                pieces[j].currentRow = tempRow;
-                pieces[j].currentCol = tempCol;
-            }
-            
-            if (isComplete()) {
-                shufflePieces();
-            }
-        }
-
-
-        function draw() {
-            const gap = Math.max(2, pieceSize * 0.04);
-            ctx.clearRect(0, 0, canvasSize, canvasSize);
-
-            // Dark background for gaps between pieces
-            ctx.fillStyle = '#1a1a2e';
-            ctx.fillRect(0, 0, canvasSize, canvasSize);
-
-            pieces.forEach(piece => {
-                drawPiece(piece, gap);
-            });
-
-            // Draw bevel effect on each piece (top-left highlight, bottom-right shadow)
-            pieces.forEach(piece => {
-                const x = piece.currentCol * pieceSize + gap;
-                const y = piece.currentRow * pieceSize + gap;
-                const w = pieceSize - gap * 2;
-
-                // Top + left highlight
-                ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
-                ctx.lineWidth = 1.5;
-                ctx.beginPath();
-                ctx.moveTo(x, y + w);
-                ctx.lineTo(x, y);
-                ctx.lineTo(x + w, y);
-                ctx.stroke();
-
-                // Bottom + right shadow
-                ctx.strokeStyle = 'rgba(0, 0, 0, 0.4)';
-                ctx.beginPath();
-                ctx.moveTo(x + w, y);
-                ctx.lineTo(x + w, y + w);
-                ctx.lineTo(x, y + w);
-                ctx.stroke();
-            });
-
-            if (selectedPiece) {
-                const sx = selectedPiece.currentCol * pieceSize;
-                const sy = selectedPiece.currentRow * pieceSize;
-
-                // Outer purple glow
-                ctx.shadowColor = '#667eea';
-                ctx.shadowBlur = 18;
-                ctx.strokeStyle = '#667eea';
-                ctx.lineWidth = 3;
-                ctx.strokeRect(sx + 1.5, sy + 1.5, pieceSize - 3, pieceSize - 3);
-                ctx.shadowBlur = 0;
-
-                // Inner white border
-                ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
-                ctx.lineWidth = 1.5;
-                ctx.strokeRect(sx + 3, sy + 3, pieceSize - 6, pieceSize - 6);
-            }
-        }
-
-        function drawPiece(piece, gap) {
-            const sourceX = piece.correctCol * pieceSize;
-            const sourceY = piece.correctRow * pieceSize;
-            const destX = piece.currentCol * pieceSize + gap;
-            const destY = piece.currentRow * pieceSize + gap;
-            const drawSize = pieceSize - gap * 2;
-
-            // Clip to rounded rectangle for each piece
-            const radius = Math.max(3, pieceSize * 0.06);
-            ctx.save();
-            roundRect(ctx, destX, destY, drawSize, drawSize, radius);
-            ctx.clip();
-
-            ctx.drawImage(
-                currentImage,
-                sourceX, sourceY, pieceSize, pieceSize,
-                destX - gap, destY - gap, pieceSize, pieceSize
-            );
-
-            ctx.restore();
-
-            // Subtle border around each piece
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
-            ctx.lineWidth = 0.5;
-            roundRect(ctx, destX, destY, drawSize, drawSize, radius);
-            ctx.stroke();
-        }
-
-        // Helper: draw rounded rectangle path
-        function roundRect(ctx, x, y, w, h, r) {
-            ctx.beginPath();
-            ctx.moveTo(x + r, y);
-            ctx.lineTo(x + w - r, y);
-            ctx.arcTo(x + w, y, x + w, y + r, r);
-            ctx.lineTo(x + w, y + h - r);
-            ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
-            ctx.lineTo(x + r, y + h);
-            ctx.arcTo(x, y + h, x, y + h - r, r);
-            ctx.lineTo(x, y + r);
-            ctx.arcTo(x, y, x + r, y, r);
-            ctx.closePath();
-        }
-
-        function getPieceAt(row, col) {
-            return pieces.find(p => p.currentRow === row && p.currentCol === col);
-        }
-
-        canvas.addEventListener('click', function(e) {
-            const rect = canvas.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-
-            const col = Math.floor(x / pieceSize);
-            const row = Math.floor(y / pieceSize);
-
-            if (!gameStarted) {
-                gameStarted = true;
-                startTimer();
-            }
-
-            if (selectedPiece === null) {
-                selectedPiece = getPieceAt(row, col);
-                draw();
-            } else {
-                const clickedPiece = getPieceAt(row, col);
-
-                // Click same piece = deselect
-                if (clickedPiece === selectedPiece) {
-                    selectedPiece = null;
-                    draw();
-                    return;
-                }
-
-                // Swap ANY two pieces (no adjacency restriction)
-                const tempRow = selectedPiece.currentRow;
-                const tempCol = selectedPiece.currentCol;
-                selectedPiece.currentRow = clickedPiece.currentRow;
-                selectedPiece.currentCol = clickedPiece.currentCol;
-                clickedPiece.currentRow = tempRow;
-                clickedPiece.currentCol = tempCol;
-
-                moves++;
-                document.getElementById('movesCount').textContent = moves;
-
-                if (gameMode === 'limited') {
-                    moveLimit--;
-                    document.getElementById('limitCount').textContent = moveLimit;
-                    if (moveLimit <= 0) {
-                        showGameOver('步数用完了！');
-                        return;
-                    }
-                }
-
-                if (isComplete()) {
-                    clearInterval(timerInterval);
-                    checkAndSaveScore();
-                    showSuccessMessage();
-                }
-
-                selectedPiece = null;
-                draw();
-            }
-        });
-
-        function isComplete() {
-            return pieces.every(piece => 
-                piece.currentRow === piece.correctRow && 
-                piece.currentCol === piece.correctCol
-            );
-        }
-
         function startTimer() {
-            clearInterval(timerInterval);
-            timerInterval = setInterval(() => {
-                seconds++;
-                updateTimer();
-                
-                if (gameMode === 'timed') {
-                    const remaining = timeLimit - seconds;
-                    document.getElementById('limitCount').textContent = Math.max(0, remaining);
-                    if (remaining <= 0) {
-                        clearInterval(timerInterval);
-                        showGameOver('时间到！');
-                    }
+            clearInterval(state.timerInterval);
+            state.timerInterval = setInterval(() => {
+                state.seconds++; updateTimer();
+                if (state.gameMode === 'timed') {
+                    const r = state.timeLimit - state.seconds;
+                    document.getElementById('limitCount').textContent = Math.max(0, r);
+                    if (r <= 0) { clearInterval(state.timerInterval); state.gameOver = true; showGameOver('时间到！'); }
                 }
             }, 1000);
         }
 
         function updateTimer() {
-            const minutes = Math.floor(seconds / 60).toString().padStart(2, '0');
-            const secs = (seconds % 60).toString().padStart(2, '0');
-            document.getElementById('timer').textContent = `${minutes}:${secs}`;
+            document.getElementById('timer').textContent =
+                `${Math.floor(state.seconds/60).toString().padStart(2,'0')}:${(state.seconds%60).toString().padStart(2,'0')}`;
         }
 
+        // ============================================================
+        // SECTION 8: USER INTERACTION
+        // ============================================================
+        canvas.addEventListener('click', function(e) {
+            if (state.gameOver) return;
+            const ps = CANVAS_SIZE / state.gridSize;
+            const rect = canvas.getBoundingClientRect();
+            const col = Math.floor((e.clientX - rect.left) / ps);
+            const row = Math.floor((e.clientY - rect.top) / ps);
+            if (row < 0 || row >= state.gridSize || col < 0 || col >= state.gridSize) return;
+            if (row === state.blankRow && col === state.blankCol) return;
+
+            if (!state.gameStarted) { state.gameStarted = true; startTimer(); }
+
+            const tile = getTileAt(row, col);
+            if (!tile || !isAdjacentToBlank(row, col)) return;
+
+            moveTile(tile);
+            state.moves++;
+            document.getElementById('movesCount').textContent = state.moves;
+
+            if (state.gameMode === 'limited') {
+                state.moveLimit--;
+                document.getElementById('limitCount').textContent = state.moveLimit;
+                if (state.moveLimit <= 0) { showGameOver('步数用完了！'); return; }
+            }
+
+            if (isComplete()) { clearInterval(state.timerInterval); checkAndSaveScore(); showSuccessMessage(); return; }
+            renderBoard();
+        });
+
+        function showHint() {
+            if (state.showingHint) { state.showingHint = false; renderBoard(); return; }
+            state.showingHint = true;
+            const ps = CANVAS_SIZE / state.gridSize;
+            ctx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+            ctx.fillStyle = '#1a1a2e'; ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+            ctx.drawImage(state.currentImage, 0, 0, CANVAS_SIZE, CANVAS_SIZE);
+            ctx.fillStyle = 'rgba(255,255,255,0.3)'; ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+            for (let r=0; r<state.gridSize; r++) for (let c=0; c<state.gridSize; c++) {
+                if (r===state.blankRow&&c===state.blankCol) continue;
+                const tile = getTileAt(r,c);
+                if (tile && (tile.currentRow!==tile.correctRow||tile.currentCol!==tile.correctCol)) {
+                    ctx.fillStyle = 'rgba(255,0,0,0.2)'; ctx.fillRect(c*ps,r*ps,ps,ps);
+                    ctx.strokeStyle = 'rgba(255,0,0,0.8)'; ctx.lineWidth = 2; ctx.strokeRect(c*ps+1,r*ps+1,ps-2,ps-2);
+                }
+            }
+            setTimeout(() => { if (state.showingHint) { state.showingHint = false; renderBoard(); } }, 2000);
+        }
+
+        // ============================================================
+        // SECTION 9: MODALS
+        // ============================================================
         function showSuccessMessage() {
-            document.getElementById('finalMoves').textContent = moves;
+            document.getElementById('finalMoves').textContent = state.moves;
             document.getElementById('finalTime').textContent = document.getElementById('timer').textContent;
-            const overlay = document.getElementById('overlay');
-            const msg = document.getElementById('successMessage');
-            overlay.classList.add('show');
-            msg.classList.add('show');
+            document.getElementById('overlay').classList.add('show');
+            document.getElementById('successMessage').classList.add('show');
         }
 
         function showGameOver(reason) {
             document.getElementById('gameOverReason').textContent = reason;
-            const overlay = document.getElementById('overlay');
-            const msg = document.getElementById('gameOverMessage');
-            overlay.classList.add('show');
-            msg.classList.add('show');
+            document.getElementById('overlay').classList.add('show');
+            document.getElementById('gameOverMessage').classList.add('show');
         }
 
         function closeModal() {
-            const overlay = document.getElementById('overlay');
-            const successMsg = document.getElementById('successMessage');
-            const gameOverMsg = document.getElementById('gameOverMessage');
-            overlay.classList.remove('show');
-            successMsg.classList.remove('show');
-            gameOverMsg.classList.remove('show');
-            // hide after transition
+            ['overlay','successMessage','gameOverMessage'].forEach(id => document.getElementById(id).classList.remove('show'));
             setTimeout(() => {
-                if (!overlay.classList.contains('show')) {
-                    overlay.style.display = 'none';
-                    successMsg.style.display = 'none';
-                    gameOverMsg.style.display = 'none';
+                if (!document.getElementById('overlay').classList.contains('show')) {
+                    document.getElementById('overlay').style.display = 'none';
+                    document.getElementById('successMessage').style.display = 'none';
+                    document.getElementById('gameOverMessage').style.display = 'none';
                 }
             }, 300);
         }
 
-        function closeModalAndNewGame() {
-            closeModal();
-            startNewGame();
-        }
+        function closeModalAndNewGame() { closeModal(); startNewGame(); }
 
-        function showHint() {
-            if (showingHint) {
-                showingHint = false;
-                draw();
-                return;
-            }
-            
-            showingHint = true;
-            ctx.clearRect(0, 0, canvasSize, canvasSize);
-            
-            ctx.fillStyle = '#1a1a2e';
-            ctx.fillRect(0, 0, canvasSize, canvasSize);
-            ctx.drawImage(currentImage, 0, 0, canvasSize, canvasSize);
-            
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-            ctx.fillRect(0, 0, canvasSize, canvasSize);
-            
-            ctx.strokeStyle = 'rgba(255, 0, 0, 0.8)';
-            ctx.lineWidth = 2;
-            
-            for (let i = 0; i < gridSize; i++) {
-                for (let j = 0; j < gridSize; j++) {
-                    const piece = pieces.find(p => p.correctRow === i && p.correctCol === j);
-                    const currentPiece = pieces.find(p => p.currentRow === i && p.currentCol === j);
-                    
-                    if (piece.id !== currentPiece.id) {
-                        ctx.fillStyle = 'rgba(255, 0, 0, 0.2)';
-                        ctx.fillRect(j * pieceSize, i * pieceSize, pieceSize, pieceSize);
-                    }
-                }
-            }
-            
-            setTimeout(() => {
-                if (showingHint) {
-                    showingHint = false;
-                    draw();
-                }
-            }, 2000);
-        }
-
+        // ============================================================
+        // SECTION 10: SCORES
+        // ============================================================
         function checkAndSaveScore() {
-            const key = `puzzle_best_${gridSize}x${gridSize}_${gameMode}`;
+            const key = `puzzle_best_${state.gridSize}x${state.gridSize}_${state.gameMode}`;
             const saved = localStorage.getItem(key);
-            
-            if (!saved || moves < parseInt(saved)) {
-                localStorage.setItem(key, moves.toString());
-                document.getElementById('newRecord').style.display = 'block';
-            } else {
-                document.getElementById('newRecord').style.display = 'none';
-            }
+            const nr = document.getElementById('newRecord');
+            if (!saved || state.moves < parseInt(saved)) {
+                localStorage.setItem(key, state.moves.toString());
+                nr.style.display = 'block';
+            } else { nr.style.display = 'none'; }
         }
 
         function updateBestScores() {
-            const container = document.getElementById('bestScores');
+            const modes = {classic:'经典',timed:'限时',limited:'步数'};
             let html = '<div class="best-scores-title">🏆 最佳成绩</div>';
-            
-            const modes = {
-                classic: '经典',
-                timed: '限时',
-                limited: '步数'
-            };
-            
-            const difficulties = [3, 4, 5, 6];
-            difficulties.forEach(d => {
-                Object.keys(modes).forEach(m => {
-                    const key = `puzzle_best_${d}x${d}_${m}`;
-                    const saved = localStorage.getItem(key);
-                    if (saved) {
-                        html += `<p>${d}×${d} ${modes[m]}: ${saved}步</p>`;
-                    }
-                });
-            });
-            
-            container.innerHTML = html;
+            [3,4,5,6].forEach(d => Object.keys(modes).forEach(m => {
+                const v = localStorage.getItem(`puzzle_best_${d}x${d}_${m}`);
+                if (v) html += `<p>${d}×${d} ${modes[m]}: ${v}步</p>`;
+            }));
+            document.getElementById('bestScores').innerHTML = html;
         }
 
+        // ============================================================
+        // SECTION 11: IMAGE SELECTION
+        // ============================================================
+        function initImageSelector() {
+            const sel = document.getElementById('imageSelector'); sel.innerHTML = '';
+            presetImages.forEach((img, idx) => {
+                const el = document.createElement('img');
+                el.src = img.generator().toDataURL();
+                el.className = `image-thumb ${idx === state.currentImageIndex ? 'active' : ''}`;
+                el.title = img.name;
+                el.onclick = () => selectPresetImage(idx);
+                sel.appendChild(el);
+            });
+            const cust = document.createElement('div');
+            cust.className = 'image-thumb'; cust.style.cssText = 'display:flex;align-items:center;justify-content:center;font-size:24px';
+            cust.textContent = '+'; cust.title = '上传自定义图片'; cust.onclick = loadImage;
+            sel.appendChild(cust);
+        }
+
+        function selectPresetImage(index) {
+            state.currentImageIndex = index;
+            state.currentImage = presetImages[index].generator();
+            document.querySelectorAll('.image-thumb').forEach((el,i) => el.classList.toggle('active', i === index));
+            startNewGame();
+        }
+
+        function loadImage() { document.getElementById('fileInput').click(); }
+
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    state.currentImage = img;
+                    state.currentImageIndex = -1;
+                    document.querySelectorAll('.image-thumb').forEach(el => el.classList.remove('active'));
+                    startNewGame();
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // ============================================================
+        // SECTION 12: INIT
+        // ============================================================
         initImageSelector();
         startNewGame();
     </script>
